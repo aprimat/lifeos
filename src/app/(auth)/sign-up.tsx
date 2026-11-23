@@ -1,11 +1,5 @@
-import { Screen } from "@/components/screen";
-import { Text } from "@/components/text";
+import { AuthForm } from '@/screens/auth/auth-form';
 
-// TODO: implement
-export default function AuthSignUpRoute() {
-  return (
-    <Screen title="(auth)/sign-up" back>
-      <Text>Coming soon</Text>
-    </Screen>
-  );
+export default function SignUpRoute() {
+  return <AuthForm mode="signUp" />;
 }

@@ -1,11 +1,5 @@
-import { Screen } from "@/components/screen";
-import { Text } from "@/components/text";
+import { NewCommitment } from '@/screens/commitments/new-commitment';
 
-// TODO: implement
-export default function CommitmentNewRoute() {
-  return (
-    <Screen title="commitment/new" back>
-      <Text>Coming soon</Text>
-    </Screen>
-  );
+export default function NewCommitmentRoute() {
+  return <NewCommitment />;
 }

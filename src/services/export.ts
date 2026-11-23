@@ -2,6 +2,7 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
+import { todayISO } from '@/domain/dates';
 import { versionOn } from '@/domain/schedule';
 import type { User, UserData } from '@/domain/types';
 
@@ -34,7 +35,7 @@ export function toJson(user: User, data: UserData): string {
 
 export async function shareExport(kind: 'json' | 'csv', user: User, data: UserData): Promise<void> {
   const content = kind === 'json' ? toJson(user, data) : toCsv(data);
-  const name = `lifeos-${kind === 'json' ? 'archive' : 'activity'}-${new Date().toISOString().slice(0, 10)}.${kind}`;
+  const name = `lifeos-${kind === 'json' ? 'archive' : 'activity'}-${todayISO()}.${kind}`;
   const mime = kind === 'json' ? 'application/json' : 'text/csv';
 
   if (Platform.OS === 'web') {

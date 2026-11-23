@@ -1,11 +1,5 @@
-import { Screen } from "@/components/screen";
-import { Text } from "@/components/text";
+import { ProgressScreen } from '@/screens/progress';
 
-// TODO: implement
-export default function TabsProgressRoute() {
-  return (
-    <Screen title="(tabs)/progress" back>
-      <Text>Coming soon</Text>
-    </Screen>
-  );
+export default function ProgressRoute() {
+  return <ProgressScreen />;
 }

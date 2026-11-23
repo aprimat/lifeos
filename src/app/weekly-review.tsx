@@ -1,11 +1,5 @@
-import { Screen } from "@/components/screen";
-import { Text } from "@/components/text";
+import { WeeklyReviewScreen } from '@/screens/review/weekly-review';
 
-// TODO: implement
 export default function WeeklyReviewRoute() {
-  return (
-    <Screen title="weekly-review" back>
-      <Text>Coming soon</Text>
-    </Screen>
-  );
+  return <WeeklyReviewScreen />;
 }

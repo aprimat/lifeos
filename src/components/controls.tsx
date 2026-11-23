@@ -354,6 +354,7 @@ export function ToggleRow({
         onValueChange={onChange}
         trackColor={{ false: c.track, true: c.primary }}
         thumbColor="#FFFFFF"
+        {...({ activeThumbColor: '#FFFFFF' } as object)}
       />
     </View>
   );

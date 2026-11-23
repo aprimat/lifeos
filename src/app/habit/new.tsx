@@ -1,11 +1,16 @@
-import { Screen } from "@/components/screen";
-import { Text } from "@/components/text";
+import { useLocalSearchParams } from 'expo-router';
 
-// TODO: implement
-export default function HabitNewRoute() {
+import type { HabitKind } from '@/domain/types';
+import { HabitForm } from '@/screens/habits/habit-form';
+
+export default function NewHabitRoute() {
+  const p = useLocalSearchParams<{ kind?: string; commitmentId?: string; goalId?: string; onboarding?: string }>();
   return (
-    <Screen title="habit/new" back>
-      <Text>Coming soon</Text>
-    </Screen>
+    <HabitForm
+      kind={(p.kind === 'reduce' ? 'reduce' : 'build') as HabitKind}
+      commitmentId={p.commitmentId || null}
+      goalId={p.goalId || null}
+      onboarding={p.onboarding === '1'}
+    />
   );
 }

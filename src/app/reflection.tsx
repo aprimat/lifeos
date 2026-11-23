@@ -1,11 +1,8 @@
-import { Screen } from "@/components/screen";
-import { Text } from "@/components/text";
+import { useLocalSearchParams } from 'expo-router';
 
-// TODO: implement
+import { ReflectionScreen } from '@/screens/reflection/reflection-screen';
+
 export default function ReflectionRoute() {
-  return (
-    <Screen title="reflection" back>
-      <Text>Coming soon</Text>
-    </Screen>
-  );
+  const { habitId, date } = useLocalSearchParams<{ habitId?: string; date?: string }>();
+  return <ReflectionScreen habitId={habitId} date={date} />;
 }

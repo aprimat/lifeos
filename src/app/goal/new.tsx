@@ -1,11 +1,5 @@
-import { Screen } from "@/components/screen";
-import { Text } from "@/components/text";
+import { GoalWizard } from '@/screens/goals/goal-wizard';
 
-// TODO: implement
-export default function GoalNewRoute() {
-  return (
-    <Screen title="goal/new" back>
-      <Text>Coming soon</Text>
-    </Screen>
-  );
+export default function NewGoalRoute() {
+  return <GoalWizard />;
 }

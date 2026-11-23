@@ -1,11 +1,5 @@
-import { Screen } from "@/components/screen";
-import { Text } from "@/components/text";
+import { GoalsTab } from '@/screens/goals/goals-tab';
 
-// TODO: implement
-export default function TabsGoalsRoute() {
-  return (
-    <Screen title="(tabs)/goals" back>
-      <Text>Coming soon</Text>
-    </Screen>
-  );
+export default function GoalsRoute() {
+  return <GoalsTab />;
 }

@@ -1,11 +1,5 @@
-import { Screen } from "@/components/screen";
-import { Text } from "@/components/text";
+import { CheckInScreen } from '@/screens/review/check-in';
 
-// TODO: implement
 export default function CheckInRoute() {
-  return (
-    <Screen title="check-in" back>
-      <Text>Coming soon</Text>
-    </Screen>
-  );
+  return <CheckInScreen />;
 }

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useColors } from '@/hooks/use-theme';
 import { radius, shadow, spacing } from '@/theme/tokens';
@@ -32,7 +32,8 @@ export function Card({ children, style, onPress, inset, selected, padding = spac
     return (
       <Pressable
         testID={testID}
-        accessibilityRole="button"
+        // On web a pressable card may contain other buttons; avoid nested <button> elements.
+        accessibilityRole={Platform.OS === 'web' ? 'link' : 'button'}
         accessibilityLabel={accessibilityLabel}
         accessibilityState={selected !== undefined ? { selected } : undefined}
         onPress={onPress}

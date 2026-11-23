@@ -1,11 +1,5 @@
-import { Screen } from "@/components/screen";
-import { Text } from "@/components/text";
+import { CommitmentReview } from '@/screens/commitments/review';
 
-// TODO: implement
-export default function CommitmentIdReviewRoute() {
-  return (
-    <Screen title="commitment/[id]/review" back>
-      <Text>Coming soon</Text>
-    </Screen>
-  );
+export default function CommitmentReviewRoute() {
+  return <CommitmentReview />;
 }

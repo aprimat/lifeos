@@ -243,7 +243,8 @@ export function keepHabitsOngoing(id: ID) {
   const old = d.commitments.find((c) => c.id === id);
   if (!old) return;
   const oldHabits = d.habits.filter((h) => h.commitmentId === id && h.status !== 'archived');
-  const habits = cloneHabits(oldHabits, todayISO(), { commitmentId: null, goalId: old.goalId });
+  // Start tomorrow: the ended commitment still covers today, so starting today would count it twice.
+  const habits = cloneHabits(oldHabits, addDays(todayISO(), 1), { commitmentId: null, goalId: old.goalId });
   mutate((x) => ({ habits: [...x.habits, ...habits] }));
 }
 
