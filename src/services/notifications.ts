@@ -28,12 +28,15 @@ if (!isWeb) {
 
 export async function ensureChannel() {
   if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync('reminders', {
-    name: 'Gentle reminders',
-    importance: Notifications.AndroidImportance.DEFAULT,
-    vibrationPattern: [0, 120],
-    lightColor: '#356BDB',
-  });
+  try {
+    await Notifications.setNotificationChannelAsync('reminders', {
+      name: 'Gentle reminders',
+      importance: Notifications.AndroidImportance.DEFAULT,
+    });
+  } catch (e) {
+    // Never block reminders on channel setup; Android falls back to the default channel.
+    console.warn('LifeOS: could not create notification channel', e);
+  }
 }
 
 export async function hasPermission(): Promise<boolean> {

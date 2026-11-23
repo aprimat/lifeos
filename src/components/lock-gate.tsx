@@ -61,7 +61,6 @@ export function LockGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (locked && enabled) unlock();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locked, enabled]);
 
   return (

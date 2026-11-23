@@ -77,7 +77,7 @@ export function AuthForm({ mode }: { mode: 'signIn' | 'signUp' }) {
         <Field label="Name">
           <TextField
             value={name}
-            onChangeText={setName}
+            onChangeText={(t) => { setName(t); setError(null); }}
             placeholder="Your first name"
             autoComplete="name"
             textContentType="name"
@@ -89,7 +89,7 @@ export function AuthForm({ mode }: { mode: 'signIn' | 'signUp' }) {
       <Field label="Email">
         <TextField
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(t) => { setEmail(t); setError(null); }}
           placeholder="you@example.com"
           autoCapitalize="none"
           autoComplete="email"
@@ -102,7 +102,7 @@ export function AuthForm({ mode }: { mode: 'signIn' | 'signUp' }) {
       <Field label="Password" hint={isUp ? 'At least 8 characters.' : undefined}>
         <TextField
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(t) => { setPassword(t); setError(null); }}
           placeholder="Password"
           secureTextEntry
           autoCapitalize="none"
@@ -117,7 +117,7 @@ export function AuthForm({ mode }: { mode: 'signIn' | 'signUp' }) {
         <Field label="Confirm password">
           <TextField
             value={confirm}
-            onChangeText={setConfirm}
+            onChangeText={(t) => { setConfirm(t); setError(null); }}
             placeholder="Repeat password"
             secureTextEntry
             autoCapitalize="none"
