@@ -5,6 +5,7 @@ import {
   flexWeek,
   flexibleForDay,
   habitBreakdown,
+  newlyReachedMilestones,
   reduceTrend,
 } from './analytics';
 import { addDays, diffDays, endOfMonth, startOfWeek, weekdayIndex } from './dates';
@@ -189,5 +190,24 @@ describe('suggestions', () => {
     const logs = Array.from({ length: 10 }, (_, k) => makeLog(h.id, addDays('2026-11-02', k), 'full'));
     const s = generateSuggestions({ habits: [h], reflections: [], automaticity: [], idx: idx([h], logs), today: '2026-11-12' });
     expect(s.map((x) => x.rule)).toEqual(['S4']);
+  });
+});
+
+describe('milestones', () => {
+  it('records the day the Nth session was done, in target order', () => {
+    const c = makeCommitment({ durationDays: 30 });
+    const h = makeHabit({ commitmentId: c.id });
+    const logs = ['02', '03', '04', '05', '06'].map((d, k) => makeLog(h.id, `2026-11-${d}`, k === 1 ? 'skipped' : 'full'));
+    const stamp = '2026-01-01T00:00:00.000Z';
+    const ms = [
+      { id: 'm4', createdAt: stamp, updatedAt: stamp, ownerType: 'commitment' as const, ownerId: c.id, title: '4', targetSessions: 4, targetDate: null, achievedAt: null },
+      { id: 'm2', createdAt: stamp, updatedAt: stamp, ownerType: 'commitment' as const, ownerId: c.id, title: '2', targetSessions: 2, targetDate: null, achievedAt: null },
+      { id: 'm9', createdAt: stamp, updatedAt: stamp, ownerType: 'commitment' as const, ownerId: c.id, title: '9', targetSessions: 9, targetDate: null, achievedAt: null },
+    ];
+    const r = newlyReachedMilestones(ms, [c], [h], idx([h], logs, [], [c]), '2026-11-10');
+    expect(r).toEqual([
+      { id: 'm2', date: '2026-11-04' }, // skip on the 3rd doesn't count
+      { id: 'm4', date: '2026-11-06' },
+    ]);
   });
 });

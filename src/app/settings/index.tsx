@@ -274,8 +274,9 @@ export default function SettingsRoute() {
         name={user.name}
         email={user.email}
         onSave={async (name, email) => {
-          await updateUser({ name, email });
-          setProfileOpen(false);
+          const err = await updateUser({ name, email });
+          if (!err) setProfileOpen(false);
+          return err;
         }}
       />
       <AreasSheet
@@ -320,7 +321,7 @@ function ProfileSheet({
   onClose: () => void;
   name: string;
   email: string;
-  onSave: (name: string, email: string) => void;
+  onSave: (name: string, email: string) => Promise<string | null>;
 }) {
   const [n, setN] = useState(name);
   const [e, setE] = useState(email);
@@ -336,7 +337,7 @@ function ProfileSheet({
     if (!n.trim()) return setError('Enter your name.');
     const emailError = validateEmail(e);
     if (emailError) return setError(emailError);
-    onSave(n.trim(), normalizeEmail(e));
+    onSave(n.trim(), normalizeEmail(e)).then((err) => err && setError(err));
   };
   return (
     <Sheet visible={visible} onClose={onClose} title="Edit profile">

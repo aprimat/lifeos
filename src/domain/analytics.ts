@@ -12,7 +12,7 @@ import {
   Occurrence,
   versionOn,
 } from './schedule';
-import type { Commitment, Habit, ISODate } from './types';
+import type { Commitment, Habit, ISODate, Milestone } from './types';
 
 /**
  * Progress rules (IMPLEMENTATION_PLAN.md §2.2–2.6).
@@ -330,4 +330,45 @@ export function dailySeries(habits: Habit[], start: ISODate, end: ISODate, idx: 
     const rest = occs.some((o) => o.status === 'rest') && planned === 0;
     return { date: d, planned, done, rest, future: d > today };
   });
+}
+
+// ---------- Milestones ----------
+
+/**
+ * Session-based commitment milestones that are now reached but not yet recorded.
+ * `date` is the day the Nth completed session happened (not the day it was noticed).
+ */
+export function newlyReachedMilestones(
+  milestones: Milestone[],
+  commitments: Commitment[],
+  habits: Habit[],
+  idx: DataIndex,
+  today: ISODate,
+): { id: string; date: ISODate }[] {
+  const out: { id: string; date: ISODate }[] = [];
+  for (const c of commitments) {
+    const pending = milestones
+      .filter((m) => m.ownerType === 'commitment' && m.ownerId === c.id && m.targetSessions && !m.achievedAt)
+      .sort((a, b) => (a.targetSessions ?? 0) - (b.targetSessions ?? 0));
+    if (!pending.length || c.status === 'draft') continue;
+    const hs = commitmentHabits(c, habits);
+    const end = commitmentEndDate(c);
+    const last = end ? minDate(end, today) : today;
+    let count = 0;
+    let i = 0;
+    for (const d of eachDay(c.startDate, last)) {
+      for (const h of hs) {
+        const log = getLog(idx, h.id, d);
+        if (!log || !isHabitActiveOn(h, d, idx)) continue;
+        const done = h.kind === 'reduce' ? (log.value ?? 0) <= (versionOn(h, d).reduce?.limit ?? 0) : log.status === 'full' || log.status === 'minimum' || log.status === 'partial';
+        if (done) count++;
+      }
+      while (i < pending.length && count >= (pending[i].targetSessions ?? Infinity)) {
+        out.push({ id: pending[i].id, date: d });
+        i++;
+      }
+      if (i >= pending.length) break;
+    }
+  }
+  return out;
 }

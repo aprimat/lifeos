@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+import { useStore } from '@/data/store';
 import { addDays, parseISODate, todayISO, weekdayIndex } from '@/domain/dates';
 import { buildIndex, occurrence, versionOn } from '@/domain/schedule';
 import type { Settings, UserData } from '@/domain/types';
@@ -183,6 +184,10 @@ export async function cancelAllNotifications() {
 
 export async function scheduleTimerEnd(habitTitle: string, seconds: number): Promise<string | null> {
   if (isWeb || seconds <= 0 || !(await hasPermission())) return null;
+  // Respect quiet hours: if the timer would end inside them, stay silent.
+  const end = new Date(Date.now() + seconds * 1000);
+  const endMinutes = end.getHours() * 60 + end.getMinutes();
+  if (applyQuietHours(endMinutes, useStore.getState().data.settings) !== endMinutes) return null;
   try {
     await ensureChannel();
     return await Notifications.scheduleNotificationAsync({

@@ -1,5 +1,6 @@
 import { addDays, todayISO } from '@/domain/dates';
-import { currentVersion } from '@/domain/schedule';
+import { newlyReachedMilestones } from '@/domain/analytics';
+import { buildIndex, currentVersion } from '@/domain/schedule';
 import type { SuggestedChange } from '@/domain/suggestions';
 import type {
   ActivityLog,
@@ -481,4 +482,17 @@ export function exportData(): UserData {
 export async function completeOnboarding() {
   const { user, updateUser } = useStore.getState();
   if (user && !user.onboardingCompletedAt) await updateUser({ onboardingCompletedAt: new Date().toISOString() });
+}
+
+// ---------------- Derived updates ----------------
+
+/** Record session-based milestones that have been reached. Safe to call after any change. */
+export function syncMilestones(today: ISODate = todayISO()) {
+  const d = data();
+  const reached = newlyReachedMilestones(d.milestones, d.commitments, d.habits, buildIndex(d), today);
+  if (!reached.length) return;
+  const dates = new Map(reached.map((r) => [r.id, r.date]));
+  mutate((x) => ({
+    milestones: x.milestones.map((m) => (dates.has(m.id) && !m.achievedAt ? { ...m, achievedAt: dates.get(m.id)!, updatedAt: now() } : m)),
+  }));
 }

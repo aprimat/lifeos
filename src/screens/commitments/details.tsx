@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -47,14 +47,8 @@ export function CommitmentDetails() {
   const progress = commitment ? commitmentProgress(commitment, allHabits, idx, today) : null;
   const milestones = commitment ? data.milestones.filter((m) => m.ownerType === 'commitment' && m.ownerId === commitment.id) : [];
 
-  // Session-based milestones are reached automatically.
+  // Session-based milestones are recorded automatically by syncMilestones (root layout).
   const done = progress?.breakdown.done ?? 0;
-  useEffect(() => {
-    for (const m of milestones) {
-      if (m.targetSessions && !m.achievedAt && done >= m.targetSessions) setMilestoneAchieved(m.id, true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [done, milestones.length]);
 
   if (!commitment || !progress) {
     return (

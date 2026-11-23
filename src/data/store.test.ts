@@ -60,6 +60,12 @@ describe('accounts and persistence', () => {
     expect(await useStore.getState().signIn('elena@example.com', 'wrong-password')).toMatch(/incorrect/);
     expect(await useStore.getState().signIn('ELENA@example.com', 'password123')).toBeNull();
     expect(useStore.getState().data.habits).toHaveLength(1);
+
+    // Changing email can't take another account's address on this device.
+    expect(await useStore.getState().updateUser({ email: 'SAM@example.com' })).toMatch(/already uses/);
+    expect(await useStore.getState().updateUser({ email: 'not-an-email' })).toMatch(/valid email/);
+    expect(await useStore.getState().updateUser({ email: 'Elena.R@Example.com' })).toBeNull();
+    expect(useStore.getState().user?.email).toBe('elena.r@example.com');
   });
 
   it('keeps history when a habit is edited, and deletes everything on account deletion', async () => {

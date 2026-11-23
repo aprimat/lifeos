@@ -14,6 +14,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { LockGate } from '@/components/lock-gate';
+import { syncMilestones } from '@/data/actions';
 import { flushSave, useStore } from '@/data/store';
 import { useColorMode, useColors } from '@/hooks/use-theme';
 import { syncNotifications } from '@/services/notifications';
@@ -49,7 +50,10 @@ export default function RootLayout() {
     const unsub = useStore.subscribe((s, prev) => {
       if (s.status !== 'ready' || s.data === prev.data) return;
       if (t) clearTimeout(t);
-      t = setTimeout(() => syncNotifications(useStore.getState().data), 1500);
+      t = setTimeout(() => {
+        syncMilestones();
+        syncNotifications(useStore.getState().data);
+      }, 1500);
     });
     return () => {
       unsub();
@@ -57,7 +61,10 @@ export default function RootLayout() {
     };
   }, []);
   useEffect(() => {
-    if (status === 'ready') syncNotifications(useStore.getState().data);
+    if (status === 'ready') {
+      syncMilestones();
+      syncNotifications(useStore.getState().data);
+    }
   }, [status]);
 
   useAuthRedirect(status);

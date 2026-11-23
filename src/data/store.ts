@@ -32,7 +32,8 @@ interface AppState {
   signIn(email: string, password: string): Promise<string | null>;
   signOut(): Promise<void>;
   deleteAccount(): Promise<void>;
-  updateUser(patch: Partial<Pick<User, 'name' | 'email' | 'focusAreas' | 'onboardingCompletedAt'>>): Promise<void>;
+  /** Returns an error message, or null on success. */
+  updateUser(patch: Partial<Pick<User, 'name' | 'email' | 'focusAreas' | 'onboardingCompletedAt'>>): Promise<string | null>;
   /** Apply an immutable change: return only the collections that changed. */
   mutate(recipe: (d: UserData) => Partial<UserData>): void;
   /** Replace all data (seed / import). */
@@ -150,11 +151,19 @@ export const useStore = create<AppState>((set, get) => ({
 
   async updateUser(patch) {
     const { user } = get();
-    if (!user) return;
-    const next: User = { ...user, ...patch, updatedAt: new Date().toISOString() };
+    if (!user) return null;
     const users = await repository.loadUsers();
+    if (patch.name !== undefined && !patch.name.trim()) return 'Enter your name.';
+    if (patch.email !== undefined) {
+      const emailError = validateEmail(patch.email);
+      if (emailError) return emailError;
+      patch = { ...patch, email: normalizeEmail(patch.email) };
+      if (users.some((u) => u.id !== user.id && u.email === patch.email)) return 'Another account on this device already uses this email.';
+    }
+    const next: User = { ...user, ...patch, updatedAt: new Date().toISOString() };
     await repository.saveUsers(users.map((u) => (u.id === user.id ? next : u)));
     set({ user: next });
+    return null;
   },
 
   mutate(recipe) {
