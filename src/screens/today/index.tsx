@@ -15,7 +15,7 @@ import { dismissPrompt } from '@/data/actions';
 import { useStore } from '@/data/store';
 import { dailyCompletion, dailySeries, dayPlan, flexibleForDay } from '@/domain/analytics';
 import { addDays, diffDays, endOfWeek, formatLong, formatShort, startOfWeek, weekdayIndex } from '@/domain/dates';
-import { commitmentDay, occurrence, scheduleMatches, type Occurrence } from '@/domain/schedule';
+import { commitmentDay, commitmentEndDate, occurrence, scheduleMatches, type Occurrence } from '@/domain/schedule';
 import type { Commitment } from '@/domain/types';
 import { useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
@@ -69,10 +69,15 @@ export function TodayScreen() {
         byCommitment.set(cid, arr);
       } else rest.push(o);
     }
+    // Running commitments with nothing planned today (rest days) still appear, quietly.
+    for (const k of active.values()) {
+      const end = commitmentEndDate(k);
+      if (!byCommitment.has(k.id) && k.startDate <= selected && (!end || selected <= end)) byCommitment.set(k.id, []);
+    }
     const commitmentGroups = [...byCommitment.entries()].map(([id, items]) => ({ commitment: active.get(id) as Commitment, items }));
     const timeGroups = TIME_OF_DAY.map((t) => ({ ...t, items: rest.filter((o) => o.version.timeOfDay === t.value) })).filter((g) => g.items.length);
     return { commitmentGroups, timeGroups };
-  }, [plan, data.commitments]);
+  }, [plan, data.commitments, selected]);
 
   // Yesterday's unlogged items (optional, dismissible).
   const yesterday = addDays(today, -1);
@@ -233,7 +238,7 @@ export function TodayScreen() {
             const done = items.filter((o) => o.done).length;
             return (
               <View key={commitment.id} style={{ gap: spacing.sm }}>
-                <SectionHeader title="Your commitment" right={`${done} of ${items.length}`} />
+                <SectionHeader title="Your commitment" right={items.length ? `${done} of ${items.length}` : 'Rest day'} />
                 <Card>
                   <Pressable
                     accessibilityRole="button"
@@ -250,10 +255,15 @@ export function TodayScreen() {
                           {commitment.durationDays ? ` of ${commitment.durationDays}` : ' · ongoing'}
                         </Text>
                       </View>
-                      <Pill label={`${done} / ${items.length}`} tone={done === items.length ? 'sage' : 'neutral'} />
+                      {items.length ? <Pill label={`${done} / ${items.length}`} tone={done === items.length ? 'sage' : 'neutral'} /> : null}
                     </Row>
                   </Pressable>
-                  <Stack gap={spacing.sm} style={{ marginTop: spacing.md }}>
+                  {items.length === 0 ? (
+                    <Text variant="bodySm" tone="secondary" style={{ marginTop: spacing.sm }}>
+                      No sessions planned today. Rest is part of the plan.
+                    </Text>
+                  ) : null}
+                  <Stack gap={spacing.sm} style={{ marginTop: items.length ? spacing.md : 0 }}>
                     {items.map((o) => (
                       <HabitRow key={o.habit.id} occ={o} date={selected} today={today} editable={editable} inset onOpen={(v) => open(o, v)} />
                     ))}

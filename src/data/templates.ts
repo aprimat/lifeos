@@ -88,8 +88,8 @@ export const TEMPLATES: Template[] = [
       },
     ],
     milestones: [
-      { title: 'First 5 speaking sessions', targetSessions: 5 },
-      { title: '20 speaking sessions', targetSessions: 20 },
+      { title: 'First 10 practice sessions', targetSessions: 10 },
+      { title: '45 practice sessions — the halfway mark', targetSessions: 45 },
     ],
     habits: (a) => {
       const beginner = a.level === 'beginner';
@@ -158,7 +158,7 @@ export const TEMPLATES: Template[] = [
         ],
       },
     ],
-    milestones: [{ title: '10 deep-work blocks', targetSessions: 10 }],
+    milestones: [{ title: 'First 20 focused sessions', targetSessions: 20 }],
     habits: (a) => [
       {
         key: 'deepwork',
@@ -206,7 +206,7 @@ export const TEMPLATES: Template[] = [
         ],
       },
     ],
-    milestones: [{ title: '14 calm evenings', targetSessions: 14 }],
+    milestones: [{ title: '40 sessions — two calm weeks', targetSessions: 40 }],
     habits: (a) => [
       {
         key: 'screens',
@@ -253,7 +253,7 @@ export const TEMPLATES: Template[] = [
         ],
       },
     ],
-    milestones: [{ title: '10 quiet mornings', targetSessions: 10 }],
+    milestones: [{ title: '20 sessions — ten quiet mornings', targetSessions: 20 }],
     habits: (a) => [
       {
         key: 'stillness',
@@ -293,7 +293,7 @@ export const TEMPLATES: Template[] = [
         ],
       },
     ],
-    milestones: [{ title: '12 walks or cardio sessions', targetSessions: 12 }],
+    milestones: [{ title: '40 movement sessions', targetSessions: 40 }],
     habits: (a) => [
       {
         key: 'mobility',

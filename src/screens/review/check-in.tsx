@@ -95,7 +95,7 @@ export function CheckInScreen() {
 
       <Card>
         <Field label="Stress and tension">
-          <ScalePicker value={stress} onChange={setStress} labels={['Deep ease', 'Manageable', 'Noticeable', 'Elevated', 'High']} />
+          <ScalePicker value={stress} onChange={setStress} labels={['At ease', 'Light', 'Some', 'Elevated', 'High']} />
         </Field>
       </Card>
 

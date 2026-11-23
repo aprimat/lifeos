@@ -427,7 +427,11 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
                 const patch: Partial<FormState> = { title: t };
                 // Alcohol: never preselect "avoid entirely" (plan §5).
                 if (f.kind === 'reduce' && isAlcohol(t) && f.reduceMode === 'avoid' && !editing) patch.reduceMode = 'taper';
-                if (f.kind === 'reduce' && isAlcohol(t) && !isAlcohol(f.title) && !editing) patch.reduceMode = 'taper';
+                if (f.kind === 'reduce' && isAlcohol(t) && !isAlcohol(f.title) && !editing) {
+                  patch.reduceMode = 'taper';
+                  // Count drinks rather than minutes, with sensible starting numbers.
+                  if (f.reduceUnit === 'min') Object.assign(patch, { reduceUnit: 'drinks', baseline: 4, finalTarget: 1, limit: 3 });
+                }
                 set(patch);
               }}
               placeholder={f.kind === 'build' ? 'e.g. Practice English speaking' : 'e.g. Social media scrolling'}
