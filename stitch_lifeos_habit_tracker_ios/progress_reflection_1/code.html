@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;min-height:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-tint": "#1958c7", "on-error-container": "#93000a", "on-primary-fixed-variant": "#0040a0", "on-tertiary-container": "#fff4f2", "inverse-primary": "#b1c5ff", "tertiary-container": "#b2563e", "on-tertiary-fixed": "#3c0800", "secondary-fixed-dim": "#6fd8c8", "on-secondary-container": "#007166", "surface": "#f9f9fe", "tertiary-fixed": "#ffdbd2", "surface-container-highest": "#e2e2e7", "error": "#ba1a1a", "on-secondary-fixed": "#00201c", "on-error": "#ffffff", "surface-container-low": "#f3f3f9", "error-container": "#ffdad6", "primary-fixed-dim": "#b1c5ff", "on-primary": "#ffffff", "on-tertiary": "#ffffff", "inverse-on-surface": "#f0f0f6", "surface-dim": "#d9d9df", "surface-bright": "#f9f9fe", "inverse-surface": "#2e3035", "secondary": "#006a60", "primary-fixed": "dae2ff", "on-surface": "#1a1c20", "surface-container-lowest": "#ffffff", "primary": "#0951c1", "on-secondary": "#ffffff", "on-background": "#1a1c20", "on-primary-container": "#f6f5ff", "on-surface-variant": "#434653", "tertiary": "#933f28", "outline": "#737785", "secondary-fixed": "#8cf5e4", "surface-variant": "#e2e2e7", "background": "#f9f9fe", "on-tertiary-fixed-variant": "#7c2e19", "surface-container": "#ededf3", "on-secondary-fixed-variant": "#005048", "secondary-container": "#8cf5e4", "tertiary-fixed-dim": "#ffb4a1", "outline-variant": "#c3c6d6", "on-primary-fixed": "#001847", "surface-container-high": "#e8e8ed", "primary-container": "#356bdb" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-2xl": "3rem", "gutter-desktop": "1.5rem", "space-lg": "1.5rem", "space-xs": "0.25rem", "space-md": "1rem", "gutter": "1rem", "margin": "1rem", "space-sm": "0.5rem", "margin-desktop": "2.5rem", "space-xl": "2rem", "margin-tablet": "1.5rem" }, "fontFamily": { "headline-sm": ["Inter"], "body-md": ["Inter"], "label-sm": ["Inter"], "body-sm": ["Inter"], "label-lg": ["Inter"], "label-md": ["Inter"], "display": ["Inter"], "display-mobile": ["Inter"], "headline-md": ["Inter"], "headline-lg": ["Inter"], "body-lg": ["Inter"] }, "fontSize": { "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "600" }], "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }], "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "display-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "body-lg": ["17px", { "lineHeight": "26px", "letterSpacing": "-0.003em", "fontWeight": "400" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]"><div class="h-16 px-gutter flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="LifeOS Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ALJJyrB6BjTUEDu_qiBEE58XwRgEUY1VrT54o3SvuMG04yX9GrHvQAaHOfvefsE0A9iNBLWSvEQkk2rRomUZRJTAd-XVaeZe6N9nfrwPaLoRjbgMqN9Bjz4R68xLQxjodikKPLIGxTVJ8sO8LZmAfdaGvBiezMWIons3oYmtRlghTTgbImeZb-Rh-0c1i8tajmtmSQGil6vxpmfhzk2tcPv1uQLDoOOWGsUF80oIn5Zm2vU"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-tight">LifeOS</span><span class="font-label-sm text-label-sm text-on-surface-variant font-normal leading-none">Progress</span></div></div><a class="w-11 h-11 flex items-center justify-end rounded-full focus:outline-none" data-path="profile-settings" href="#"><img alt="Profile" class="w-9 h-9 rounded-full object-cover shadow-[0_2px_8px_rgba(0,0,0,0.05)]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRLxwMlBoWkdQ04-EUWrsfCp4hEL8HRA9GdGhGzkyx4jjkJE7qJwnOZ_VVD6D4QljnIMqK3i-8ii-nmToluEsCOR0T-d3zVfjbpoxbmMWM9aY4dES5yhKuiBgLUIQyEeygzujgE-EvDSGnDgtZMdkMSZmegpMSATFllbZ1ofl2RBYI9Wrln6uSSYLwkSPqDHkCB8fzBiIL3QyTz5C7Mm2U-GtIVaAUm5JxHEdFjBc"/></a></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface"><div class="flex flex-col w-full px-margin pb-space-2xl space-y-space-lg">
+<!-- Top Segmented Filter -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex items-center p-1 bg-surface-container-low rounded-xl w-full max-w-sm mx-auto shadow-sm">
+<button class="segment-btn flex-1 py-1.5 px-3 rounded-lg text-center font-label-md text-label-md transition-all duration-200 bg-surface-container-lowest text-primary shadow-sm" data-target="week" type="button">
+        This Week
+      </button>
+<button class="segment-btn flex-1 py-1.5 px-3 rounded-lg text-center font-label-md text-label-md transition-all duration-200 text-on-surface-variant hover:text-on-surface" data-target="month" type="button">
+        This Month
+      </button>
+<button class="segment-btn flex-1 py-1.5 px-3 rounded-lg text-center font-label-md text-label-md transition-all duration-200 text-on-surface-variant hover:text-on-surface" data-target="cycle" type="button">
+        Cycle
+      </button>
+</div>
+</div>
+<!-- Reassuring Status Toast / Mindful Heading -->
+<div class="flex items-center gap-space-sm px-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-secondary">spa</span>
+<span class="font-body-sm text-body-sm">Tracking with kindness. Consistency creates calm.</span>
+</div>
+<!-- Key Metrics (Bento Trio) -->
+<div class="grid grid-cols-2 gap-space-sm">
+<!-- Consistency Rate Card (Full width on top) -->
+<div class="col-span-2 bg-surface-container-lowest p-space-lg rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] relative overflow-hidden flex items-center justify-between">
+<div class="space-y-1 z-10">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Consistency Rate</span>
+<div class="flex items-baseline gap-2">
+<span class="font-display-mobile text-display-mobile text-on-surface font-semibold tracking-tight">84%</span>
+<span class="inline-flex items-center gap-0.5 text-secondary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">north_east</span>
+<span>+3.2%</span>
+</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pt-1">Steady pace across 26 active days</p>
+</div>
+<!-- Minimal Circular Gauge SVG -->
+<div class="relative w-20 h-20 flex-shrink-0 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90 transform" viewbox="0 0 72 72">
+<circle class="text-surface-container-highest fill-none" cx="36" cy="36" r="28" stroke="currentColor" stroke-width="5"></circle>
+<circle class="text-primary-container fill-none transition-all duration-1000 ease-out" cx="36" cy="36" r="28" stroke="currentColor" stroke-dasharray="175.9" stroke-dashoffset="28.1" stroke-linecap="round" stroke-width="5"></circle>
+</svg>
+<span class="material-symbols-outlined text-primary text-[22px] absolute inset-auto">done_all</span>
+</div>
+</div>
+<!-- Active Commitments -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wide text-outline">Commitments</span>
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+</div>
+<div class="my-space-sm">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">2 of 2</span>
+<p class="font-label-sm text-label-sm text-secondary font-medium mt-0.5">Progressing reliably</p>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full w-full"></div>
+</div>
+</div>
+<!-- Intentional Hours -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wide text-outline">Deep Presence</span>
+<span class="material-symbols-outlined text-tertiary-container text-[18px]">timelapse</span>
+</div>
+<div class="my-space-sm">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">38.5</span>
+<span class="font-label-md text-label-md text-on-surface-variant">hrs</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-normal mt-0.5">Mindful deep work</p>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-tertiary-container h-full rounded-full w-4/5"></div>
+</div>
+</div>
+</div>
+<!-- Commitment In-Depth: 60-Day Deep Focus Roadmap -->
+<section class="space-y-space-sm">
+<div class="flex items-center justify-between px-space-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">explore</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Active Commitment</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Cycle 1 of 4</span>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] space-y-space-md">
+<!-- Title & Day Counter -->
+<div class="flex items-start justify-between">
+<div class="space-y-0.5">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">60-Day Deep Focus &amp; Presence</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Reclaiming unfragmented attention blocks</p>
+</div>
+<div class="text-right">
+<span class="font-label-md text-label-md font-semibold text-primary">Day 34</span>
+<span class="font-label-sm text-label-sm text-outline block">of 60</span>
+</div>
+</div>
+<!-- Linear Stepped Milestone Roadmap -->
+<div class="pt-2 pb-1 space-y-2">
+<!-- Progress Bar with Checkpoints -->
+<div class="relative w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-primary-container rounded-full transition-all duration-700" style="width: 56.6%;"></div>
+</div>
+<!-- Milestones Row -->
+<div class="grid grid-cols-4 gap-1 pt-1 font-label-sm text-label-sm">
+<div class="flex flex-col items-start space-y-1">
+<span class="inline-flex items-center gap-1 text-secondary font-medium">
+<span class="material-symbols-outlined text-[13px]">check_circle</span> Day 15
+            </span>
+<span class="text-outline text-[10px]">Foundation</span>
+</div>
+<div class="flex flex-col items-center space-y-1 text-center">
+<span class="inline-flex items-center gap-1 text-secondary font-medium">
+<span class="material-symbols-outlined text-[13px]">check_circle</span> Day 30
+            </span>
+<span class="text-outline text-[10px]">Flow Habit</span>
+</div>
+<div class="flex flex-col items-center space-y-1 text-center">
+<span class="inline-flex items-center gap-1 text-primary font-semibold">
+<span class="material-symbols-outlined text-[13px]">radio_button_checked</span> Day 45
+            </span>
+<span class="text-on-surface-variant text-[10px]">Upcoming</span>
+</div>
+<div class="flex flex-col items-end space-y-1 text-right">
+<span class="inline-flex items-center gap-1 text-outline font-medium">
+<span class="material-symbols-outlined text-[13px]">radio_button_unchecked</span> Day 60
+            </span>
+<span class="text-outline text-[10px]">Integration</span>
+</div>
+</div>
+</div>
+<!-- Reflection Prompt Note Callout -->
+<div class="bg-surface-container-low p-space-md rounded-lg flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[20px] mt-0.5 flex-shrink-0">sentiment_calm</span>
+<div class="space-y-0.5 min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-secondary uppercase tracking-wider">Mid-Cycle Observation</span>
+<p class="font-body-sm text-body-sm text-on-surface italic line-clamp-2">
+            “Felt noticeably less hurried during team syncs last Tuesday. Retaining calm even when agendas shift.”
+          </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Habit Consistency Matrix (Non-Punitive Calendar Grid) -->
+<section class="space-y-space-sm">
+<div class="flex items-center justify-between px-space-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">calendar_view_week</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Weekly Rhythm</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Last 7 Days</span>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] space-y-space-md">
+<!-- Days of Week Header -->
+<div class="grid grid-cols-8 gap-2 items-center text-center font-label-sm text-label-sm text-outline">
+<div class="text-left font-normal text-on-surface-variant col-span-1">Habit</div>
+<div>M</div>
+<div>T</div>
+<div>W</div>
+<div>T</div>
+<div>F</div>
+<div>S</div>
+<div class="font-semibold text-primary">S</div>
+</div>
+<!-- Habit Row 1: Morning Sunlight & Breath -->
+<div class="grid grid-cols-8 gap-2 items-center">
+<div class="col-span-1 truncate font-label-md text-label-md text-on-surface flex items-center gap-1.5" title="Morning Sunlight">
+<span class="w-2 h-2 rounded-full bg-tertiary-container flex-shrink-0"></span>
+<span class="truncate">Sunlight</span>
+</div>
+<!-- 7 Days dots (neutral empty, calm filled) -->
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-surface-container-highest" title="Rest day"></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+</div>
+<!-- Habit Row 2: Deep Reading -->
+<div class="grid grid-cols-8 gap-2 items-center">
+<div class="col-span-1 truncate font-label-md text-label-md text-on-surface flex items-center gap-1.5" title="Reading &amp; Notes">
+<span class="w-2 h-2 rounded-full bg-primary flex-shrink-0"></span>
+<span class="truncate">Reading</span>
+</div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed-variant"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-surface-container-highest" title="Soft unrecorded slot"></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed-variant"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed-variant"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed-variant"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-surface-container-highest"></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed-variant"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+</div>
+<!-- Habit Row 3: Evening Disconnect -->
+<div class="grid grid-cols-8 gap-2 items-center">
+<div class="col-span-1 truncate font-label-md text-label-md text-on-surface flex items-center gap-1.5" title="Unplug at 21:30">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed-dim flex-shrink-0"></span>
+<span class="truncate">Unplug</span>
+</div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-surface-container-highest"></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined text-[14px]">check</span></span></div>
+<div class="flex justify-center"><span class="w-6 h-6 rounded-full bg-surface-container-highest"></span></div>
+</div>
+<!-- Behavior Reduction Highlight Banner -->
+<div class="mt-space-sm pt-space-sm bg-surface-container-low p-space-md rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary shadow-sm">
+<span class="material-symbols-outlined text-[20px]">screen_lock_portrait</span>
+</div>
+<div>
+<div class="font-label-md text-label-md font-semibold text-on-surface">Mindless Screen Time</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Reduced by <span class="font-semibold text-secondary">42 mins</span> daily average</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Past 3 wks</span>
+</div>
+</div>
+</section>
+<!-- Recent Reflections & Insights Section -->
+<section class="space-y-space-sm">
+<div class="flex items-center justify-between px-space-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">edit_note</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Weekly Reflections</h2>
+</div>
+<button class="font-label-md text-label-md text-primary font-medium hover:underline">
+        Archive
+      </button>
+</div>
+<!-- Reflection Card -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant font-label-sm text-label-sm font-semibold">
+            W4
+          </span>
+<span class="font-label-md text-label-md font-medium text-on-surface">Week 4 Debrief • Focus Cycle</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Oct 20</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+        “Energy dipped mid-week due to late meetings, but pausing for 5 minutes before replying helped defuse tension. Noticeable lift in quality of work by protecting morning 90-minute blocks.”
+      </p>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant">#focus</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant">#patience</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant">#sleep-hygiene</span>
+</div>
+<!-- Quick Action Prompt to Record Sunday Reflection -->
+<div class="pt-space-xs">
+<button class="w-full h-12 rounded-xl bg-primary-container text-on-primary-container font-label-lg text-label-lg flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-sm hover:opacity-95" id="open-record-modal">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+<span>Record Sunday Reflection</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Atmospheric Calming Visual Anchor -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-low p-space-lg flex items-center gap-space-md">
+<div class="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Serene minimalist architectural corner with soft afternoon sunlight casting delicate gentle shadows over a pristine smooth plaster wall, calming Japanese wabi-sabi aesthetic with pale slate blue and muted teal undertones, cinematic depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBynqtX319Fwkwzw-OKqDlzVhfM21u_8Zojc4KGWe5IdolO_I1WlOb74W6DqoNDYg5X_a5B__NIKCSfx7feKHgTeCjjjj56DHLwbfZPUAPC4AUeqPmheoN9xcPHH5waEa9ORc4l-vlwoDJYiXVACC12YFWojiOXAw3VwruyY4aQu2L5Zy6M31HJNInH8x-sAJC--wIgzFCCVUz4HC2DjMmka8VTNyuVc41HEcXUmAE"/>
+</div>
+<div class="space-y-1 min-w-0">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Weekly Mindset</span>
+<p class="font-body-sm text-body-sm text-on-surface font-medium leading-snug">
+        “Progress is quiet. It accumulates without fanfare.”
+      </p>
+</div>
+</div>
+<!-- Interactive Voice / Quick Note Modal (Hidden by default, pure vanilla JS toggle) -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/30 backdrop-blur-sm hidden items-end sm:items-center justify-center p-gutter" id="reflection-modal">
+<div class="w-full max-w-md bg-surface-container-lowest rounded-2xl shadow-xl p-space-lg space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[24px]">graphic_eq</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Sunday Reflection</h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface" id="close-record-modal">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="p-space-lg rounded-xl bg-surface-container-low flex flex-col items-center justify-center text-center space-y-space-sm">
+<div class="w-16 h-16 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 shadow-md" id="record-pulsing-btn">
+<span class="material-symbols-outlined text-[28px]" id="mic-icon">mic</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant" id="record-status">Tap to start voice note (or write below)</span>
+</div>
+<textarea class="w-full bg-surface-container-low text-on-surface rounded-xl p-space-sm font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-outline resize-none" placeholder="What brought you genuine stillness this week?..." rows="3"></textarea>
+<div class="flex items-center justify-end gap-2 pt-space-xs">
+<button class="px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container" id="cancel-modal">
+          Save Draft
+        </button>
+<button class="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold transition-all active:scale-[0.98]" id="save-modal">
+          Log Reflection
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function initProgressInteractions() {
+    // Segmented control pill interactions
+    const segmentBtns = document.querySelectorAll('.segment-btn');
+    segmentBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        segmentBtns.forEach(b => {
+          b.classList.remove('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
+          b.classList.add('text-on-surface-variant');
+        });
+        btn.classList.remove('text-on-surface-variant');
+        btn.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
+      });
+    });
+
+    // Modal behavior for reflection voice note
+    const modal = document.getElementById('reflection-modal');
+    const openBtn = document.getElementById('open-record-modal');
+    const closeBtn = document.getElementById('close-record-modal');
+    const cancelBtn = document.getElementById('cancel-modal');
+    const saveBtn = document.getElementById('save-modal');
+    const pulseBtn = document.getElementById('record-pulsing-btn');
+    const recordStatus = document.getElementById('record-status');
+    const micIcon = document.getElementById('mic-icon');
+
+    function openModal() {
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeModal() {
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        // Reset recording mock state
+        if (pulseBtn) {
+          pulseBtn.classList.remove('animate-pulse', 'bg-tertiary-container');
+          pulseBtn.classList.add('bg-primary-container');
+        }
+        if (recordStatus) recordStatus.textContent = 'Tap to start voice note (or write below)';
+        if (micIcon) micIcon.textContent = 'mic';
+      }
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    if (saveBtn) saveBtn.addEventListener('click', closeModal);
+
+    // Audio recording playful toggle
+    let isRecording = false;
+    if (pulseBtn) {
+      pulseBtn.addEventListener('click', () => {
+        isRecording = !isRecording;
+        if (isRecording) {
+          pulseBtn.classList.add('animate-pulse', 'bg-tertiary-container');
+          pulseBtn.classList.remove('bg-primary-container');
+          micIcon.textContent = 'stop';
+          recordStatus.textContent = 'Listening with care... 00:08';
+        } else {
+          pulseBtn.classList.remove('animate-pulse', 'bg-tertiary-container');
+          pulseBtn.classList.add('bg-primary-container');
+          micIcon.textContent = 'check';
+          recordStatus.textContent = 'Reflection captured smoothly (44s)';
+        }
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/85 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.04)]" data-active-classes="text-primary font-semibold"><div class="flex items-center justify-around h-16 max-w-md mx-auto px-gutter"><a class="flex flex-col items-center justify-center min-w-[64px] min-h-[44px] gap-0.5 text-outline transition-colors hover:text-on-surface" data-path="today" href="#"><span class="material-symbols-outlined text-[24px]">wb_sunny</span><span class="font-label-sm text-label-sm">Today</span></a><a class="flex flex-col items-center justify-center min-w-[64px] min-h-[44px] gap-0.5 text-outline transition-colors hover:text-on-surface" data-path="goals" href="#"><span class="material-symbols-outlined text-[24px]">flag</span><span class="font-label-sm text-label-sm">Goals</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[64px] min-h-[44px] gap-0.5 transition-colors text-primary font-semibold" data-path="progress" href="#"><span class="material-symbols-outlined text-[24px]">incomplete_circle</span><span class="font-label-sm text-label-sm">Progress</span></a></div></nav></body></html>

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "tertiary": "#933f28", "surface-dim": "#d9d9df", "background": "#f9f9fe", "on-secondary": "#ffffff", "on-primary": "#ffffff", "on-tertiary-container": "#fff4f2", "error": "#ba1a1a", "on-secondary-fixed-variant": "#005048", "inverse-surface": "#2e3035", "inverse-on-surface": "#f0f0f6", "on-primary-fixed-variant": "#0040a0", "surface-variant": "#e2e2e7", "on-primary-container": "#f6f5ff", "inverse-primary": "#b1c5ff", "on-tertiary-fixed-variant": "#7c2e19", "on-error-container": "#93000a", "primary-container": "#356bdb", "primary-fixed": "#dae2ff", "surface-container-low": "#f3f3f9", "surface-container": "#ededf3", "outline-variant": "#c3c6d6", "on-secondary-container": "#007166", "on-surface-variant": "#434653", "on-surface": "#1a1c20", "surface-container-highest": "#e2e2e7", "secondary": "#006a60", "on-error": "#ffffff", "primary-fixed-dim": "#b1c5ff", "surface-tint": "#1958c7", "on-tertiary-fixed": "#3c0800", "secondary-container": "#8cf5e4", "secondary-fixed": "#8cf5e4", "outline": "#737785", "primary": "#0951c1", "error-container": "#ffdad6", "secondary-fixed-dim": "#6fd8c8", "on-background": "#1a1c20", "on-primary-fixed": "#001847", "surface-container-high": "#e8e8ed", "tertiary-fixed": "#ffdbd2", "surface-container-lowest": "#ffffff", "on-secondary-fixed": "#00201c", "tertiary-container": "#b2563e", "tertiary-fixed-dim": "#ffb4a1", "on-tertiary": "#ffffff", "surface-bright": "#f9f9fe", "surface": "#f9f9fe" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "margin": "1rem", "margin-tablet": "1.5rem", "space-xl": "2rem", "gutter": "1rem", "space-xs": "0.25rem", "space-2xl": "3rem", "space-lg": "1.5rem", "space-sm": "0.5rem", "space-md": "1rem", "margin-desktop": "2.5rem", "gutter-desktop": "1.5rem" }, fontFamily: { "body-md": ["Inter"], "label-md": ["Inter"], "headline-lg": ["Inter"], "label-sm": ["Inter"], "headline-md": ["Inter"], "headline-sm": ["Inter"], "label-lg": ["Inter"], "body-sm": ["Inter"], "body-lg": ["Inter"], "display-mobile": ["Inter"], "display": ["Inter"] }, fontSize: { "body-md": ["15px", { lineHeight: "22px", fontWeight: "400" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }], "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }], "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.03em", fontWeight: "600" }], "headline-md": ["22px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }], "headline-sm": ["18px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }], "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "500" }], "body-sm": ["13px", { lineHeight: "18px", fontWeight: "400" }], "body-lg": ["17px", { lineHeight: "26px", letterSpacing: "-0.003em", fontWeight: "400" }], "display-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600" }], "display": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "600" }] } } } };</script><style>@layer base { html, body { margin: 0; padding: 0; background-color: #f9f9fe; } .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); } .pt-safe { padding-top: env(safe-area-inset-top, 0px); } } ::-webkit-scrollbar { display: none; }</style></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)] pt-safe"><div class="h-14 px-margin flex items-center justify-between"><div class="flex items-center gap-space-xs"><button aria-label="Back" class="min-w-[44px] min-h-[44px] -ml-space-xs flex items-center gap-space-xs text-primary transition-opacity active:opacity-70 focus:outline-none" onclick="history.back()" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back_ios_new</span><span class="font-body-md text-body-md text-primary">Back</span></button></div><div class="flex-1 px-space-xs text-center truncate"><h1 class="font-headline-sm text-headline-sm text-on-surface truncate">Habit Progress</h1></div><div class="flex items-center justify-end gap-space-xs"><button aria-label="More options" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors rounded-full focus:outline-none" type="button"><span class="material-symbols-outlined text-[22px]">more_horiz</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-space-xs flex-shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full min-h-screen pt-14 pb-safe bg-surface px-margin"><div class="flex flex-col w-full pb-10">
+<!-- Section 1: Habit Header & Context -->
+<section class="flex flex-col gap-space-sm mb-space-lg">
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="font-label-sm text-label-sm tracking-wider uppercase text-primary">Active Anchor</span>
+<span class="text-[10px] text-outline">•</span>
+<span class="font-label-sm text-label-sm tracking-wider uppercase text-on-surface-variant">Communication &amp; Career</span>
+</div>
+<div class="flex flex-col">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Practice English speaking</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">10 min daily • Anchored to morning coffee</p>
+</div>
+<!-- Goal & Sprint Anchors -->
+<div class="flex flex-wrap items-center gap-space-xs mt-space-xs">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-on-surface font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-primary">target</span>
+<span>Goal: Improve my English</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-on-surface font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-secondary">pace</span>
+<span>30-Day Sprint (Day 18 of 30)</span>
+</div>
+</div>
+<!-- Mode Switch Pill -->
+<div class="mt-space-sm bg-surface-container-low p-1 rounded-xl flex flex-col gap-1.5 shadow-sm">
+<div class="grid grid-cols-2 gap-1 p-0.5" role="tablist">
+<button class="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-surface-container-lowest text-on-surface shadow-sm font-label-md text-label-md transition-all" id="mode-build" type="button">
+<span class="material-symbols-outlined text-[16px] text-primary">trending_up</span>
+<span>Active Practice (Build)</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" id="mode-reduction" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Reduction View Mode</span>
+</button>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant px-2 pb-0.5 text-center">
+        Showing build metrics. Tap to preview reduction habit adaptation.
+      </p>
+</div>
+</section>
+<!-- Section 2: Core Consistency Metrics -->
+<section class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm mb-space-xl">
+<!-- Consistency Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-md text-label-md">Cadence Health</span>
+<span class="material-symbols-outlined text-[18px] text-primary">verified</span>
+</div>
+<div class="my-2">
+<div class="flex items-baseline gap-1.5">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold">88%</span>
+<span class="font-label-sm text-label-sm text-secondary font-medium">Consistent</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">22 of 25 target sessions</p>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 88%"></div>
+</div>
+</div>
+<!-- Planned vs Completed -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-md text-label-md">Target Fulfillment</span>
+<span class="material-symbols-outlined text-[18px] text-secondary">event_available</span>
+</div>
+<div class="my-2">
+<div class="flex items-baseline gap-1.5">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold">22 / 25</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">sessions</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">3 deliberate rest days honored</p>
+</div>
+<div class="inline-flex items-center gap-1 text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">nightlight</span>
+<span>Rhythm protected</span>
+</div>
+</div>
+<!-- Total Volume -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-md text-label-md">Time Spoken</span>
+<span class="material-symbols-outlined text-[18px] text-primary-container">timer</span>
+</div>
+<div class="my-2">
+<div class="flex items-baseline gap-1.5">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold">245</span>
+<span class="font-label-md text-label-md text-on-surface">min total</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Avg 11 min / session (target 10m)</p>
+</div>
+<div class="inline-flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">trending_flat</span>
+<span>+10% over daily target</span>
+</div>
+</div>
+</section>
+<!-- Section 3: Multi-Status Calendar History -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-xl flex flex-col gap-space-md">
+<!-- Header with mini pagination -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">October 2024</h2>
+<span class="px-2 py-0.5 bg-surface-container-low text-on-surface-variant rounded-md font-label-sm text-label-sm">Month 10</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">22 completed • 2 partial • 1 missed • 3 rest</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button aria-label="Previous month" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button aria-label="Next month" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- 7 Day Column Headers -->
+<div class="grid grid-cols-7 gap-1.5 text-center font-label-sm text-label-sm text-on-surface-variant">
+<span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+</div>
+<!-- Calendar Matrix (30 Days) -->
+<div class="grid grid-cols-7 gap-1.5">
+<!-- Oct 1 - Oct 5: Completed -->
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>1</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>2</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>3</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>4</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>5</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<!-- Oct 6: Planned Rest (Sunday) -->
+<div class="aspect-square rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>6</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5" style="font-variation-settings: 'FILL' 1;">nightlight</span>
+</div>
+<!-- Oct 7 - Oct 11 -->
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>7</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>8</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<!-- Oct 9: Partial Session (Flex) -->
+<div class="aspect-square rounded-lg bg-primary-fixed text-on-primary-fixed flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>9</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary mt-0.5"></span>
+</div>
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>10</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>11</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>12</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<!-- Oct 13: Planned Rest -->
+<div class="aspect-square rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>13</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5" style="font-variation-settings: 'FILL' 1;">nightlight</span>
+</div>
+<!-- Oct 14 - Oct 18 -->
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>14</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<!-- Oct 15: Skipped/Grace -->
+<div class="aspect-square rounded-lg bg-surface-container text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>15</span>
+<span class="w-1.5 h-0.5 rounded-full bg-outline mt-0.5"></span>
+</div>
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>16</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<!-- Oct 17: Partial Session -->
+<div class="aspect-square rounded-lg bg-primary-fixed text-on-primary-fixed flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>17</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary mt-0.5"></span>
+</div>
+<!-- Oct 18 (Today) -->
+<div class="aspect-square rounded-lg bg-primary text-on-primary flex flex-col items-center justify-center font-label-sm text-label-sm shadow-sm">
+<span class="font-semibold">18</span>
+<span class="material-symbols-outlined text-[12px] -mt-0.5">check</span>
+</div>
+<!-- Oct 19 - Oct 31: Upcoming / Deliberate Pauses -->
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>19</span>
+</div>
+<!-- Oct 20 (Planned rest) -->
+<div class="aspect-square rounded-lg bg-secondary-fixed/50 text-on-secondary-fixed-variant flex flex-col items-center justify-center font-label-sm text-label-sm">
+<span>20</span>
+<span class="material-symbols-outlined text-[11px] -mt-0.5 opacity-60">nightlight</span>
+</div>
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>21</span></div>
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>22</span></div>
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>23</span></div>
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>24</span></div>
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>25</span></div>
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>26</span></div>
+<div class="aspect-square rounded-lg bg-secondary-fixed/50 text-on-secondary-fixed-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>27</span></div>
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>28</span></div>
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>29</span></div>
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>30</span></div>
+<div class="aspect-square rounded-lg bg-surface-container-low text-on-surface-variant flex flex-col items-center justify-center font-label-sm text-label-sm"><span>31</span></div>
+</div>
+<!-- Calendar Legend -->
+<div class="flex flex-wrap items-center gap-space-xs pt-space-xs border-t border-surface-container">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-low font-label-sm text-label-sm text-on-surface">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<span>Completed</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-low font-label-sm text-label-sm text-on-surface">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-fixed"></span>
+<span>Partial / Flex</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-low font-label-sm text-label-sm text-on-surface">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary-fixed"></span>
+<span>Rest Day</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-low font-label-sm text-label-sm text-on-surface">
+<span class="w-2.5 h-2.5 rounded-full bg-surface-variant"></span>
+<span>Skipped / Grace</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant italic">
+      Rest days are deliberate rhythm protection, not lapses.
+    </p>
+</section>
+<!-- Section 4: Weekly Trend & Practice Volume -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-xl flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Weekly Cadence &amp; Minutes</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Goal baseline: 50 min/week</p>
+</div>
+<span class="font-label-md text-label-md px-2.5 py-1 rounded-full bg-surface-container-low text-primary">
+        +32% vs target
+      </span>
+</div>
+<!-- Chart Visual with Baseline Indicator -->
+<div class="relative pt-6 pb-2">
+<!-- Target dashed guideline -->
+<div class="absolute left-0 right-0 top-[52%] border-b border-dashed border-outline-variant flex items-center justify-end">
+<span class="font-label-sm text-label-sm text-outline bg-surface-container-lowest px-1 -mr-1">50m target</span>
+</div>
+<!-- 4 Week Bars -->
+<div class="grid grid-cols-4 gap-space-md items-end h-32 relative z-10">
+<!-- Week 1 -->
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant">50m</span>
+<div class="w-full max-w-[42px] bg-primary/70 rounded-t-lg transition-all" style="height: 52%;"></div>
+<span class="font-label-md text-label-md text-on-surface">W1</span>
+</div>
+<!-- Week 2 -->
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant">60m</span>
+<div class="w-full max-w-[42px] bg-primary/80 rounded-t-lg transition-all" style="height: 64%;"></div>
+<span class="font-label-md text-label-md text-on-surface">W2</span>
+</div>
+<!-- Week 3 -->
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant">55m</span>
+<div class="w-full max-w-[42px] bg-primary/75 rounded-t-lg transition-all" style="height: 58%;"></div>
+<span class="font-label-md text-label-md text-on-surface">W3</span>
+</div>
+<!-- Week 4 (Current) -->
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<span class="font-label-sm text-label-sm text-primary font-medium">80m</span>
+<div class="w-full max-w-[42px] bg-primary rounded-t-lg transition-all shadow-sm" style="height: 88%;"></div>
+<span class="font-label-md text-label-md text-primary font-medium">W4</span>
+</div>
+</div>
+</div>
+<!-- Week Breakdown subtext -->
+<div class="grid grid-cols-2 gap-space-xs text-on-surface-variant font-body-sm text-body-sm pt-2">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>W4 Pace: 4/5 days in progress</span>
+</div>
+<div class="flex items-center gap-1.5 justify-end">
+<span class="material-symbols-outlined text-[16px] text-secondary">trending_up</span>
+<span>Peak fluency week</span>
+</div>
+</div>
+</section>
+<!-- Section 5: Subjective Automaticity Assessment -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-xl flex flex-col gap-space-sm">
+<div class="flex items-start justify-between">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Subjective Automaticity</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">
+          Self-reported reflection — not an automated or pseudo-scientific habit algorithm.
+        </p>
+</div>
+<span class="material-symbols-outlined text-primary text-[20px]">psychology_alt</span>
+</div>
+<blockquote class="font-body-md text-body-md text-on-surface bg-surface-container-low p-space-sm rounded-lg my-1">
+      “How natural and unforced does this habit feel right now?”
+    </blockquote>
+<!-- Current rating display -->
+<div class="flex items-baseline justify-between mt-1">
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">7</span>
+<span class="font-body-md text-body-md text-on-surface-variant">/ 10</span>
+<span class="font-label-md text-label-md px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed ml-1">
+          Emerging Natural Anchor
+        </span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Oct 14 (3 days ago)</span>
+</div>
+<!-- 10-step visual tactile segment bar -->
+<div class="grid grid-cols-10 gap-1 my-2">
+<div class="h-2 rounded-full bg-primary"></div>
+<div class="h-2 rounded-full bg-primary"></div>
+<div class="h-2 rounded-full bg-primary"></div>
+<div class="h-2 rounded-full bg-primary"></div>
+<div class="h-2 rounded-full bg-primary"></div>
+<div class="h-2 rounded-full bg-primary"></div>
+<div class="h-2 rounded-full bg-primary shadow-sm ring-2 ring-primary/20"></div>
+<div class="h-2 rounded-full bg-surface-container"></div>
+<div class="h-2 rounded-full bg-surface-container"></div>
+<div class="h-2 rounded-full bg-surface-container"></div>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>1: High conscious effort</span>
+<span>10: Second nature flow</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs mt-1 border-t border-surface-container">
+<span class="font-body-sm text-body-sm text-secondary font-medium">Up from 4/10 on Day 1</span>
+<button class="inline-flex items-center gap-1 font-label-md text-label-md text-primary font-medium hover:underline" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Update reflection rating</span>
+</button>
+</div>
+</section>
+<!-- Section 6: Adaptive Reduction Preview Card -->
+<section class="bg-surface-container-low rounded-xl p-space-md shadow-sm mb-space-xl flex flex-col gap-space-sm transition-all" id="reduction-preview-card">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Reduction Habit Adaptation</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Previewing LifeOS layout for restraint targets</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm">Example</span>
+</div>
+<!-- Reduction metrics prototype -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md mt-1 flex flex-col gap-space-sm shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant">Target Habit</span>
+<span class="font-label-md text-label-md text-on-surface font-medium">Reduce social media scrolling</span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm pt-1">
+<div class="p-space-sm rounded-lg bg-surface-container-low">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Daily Incidents</span>
+<div class="font-headline-sm text-headline-sm text-on-surface mt-0.5">1 session</div>
+<span class="font-label-sm text-label-sm text-secondary">vs baseline 6</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Baseline Shift</span>
+<div class="font-headline-sm text-headline-sm text-secondary mt-0.5">-68%</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">vs Sept average</span>
+</div>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Subjective Urge Intensity</span>
+<span class="font-label-sm text-label-sm font-medium text-on-surface">Peak 3 / 10 (Mild)</span>
+</div>
+<div class="inline-flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-primary">auto_stories</span>
+<span>Substitution: Replaced with paperback reading</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 7: Practice Reflections -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-xl flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Practice Reflections</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Qualitative context over raw tallying</p>
+</div>
+<button class="inline-flex items-center gap-1 text-primary font-label-md text-label-md font-medium hover:underline" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>Add note</span>
+</button>
+</div>
+<!-- Notes list -->
+<div class="flex flex-col gap-space-sm">
+<article class="p-space-sm rounded-xl bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span class="font-medium text-on-surface">Oct 16 • Day 17</span>
+<span class="inline-flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-fixed"></span>
+<span>Flex entry</span>
+</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          “Used the 2-minute minimum spoken voice note when I had back-to-back client calls. Kept the mental momentum alive without stress.”
+        </p>
+</article>
+<article class="p-space-sm rounded-xl bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span class="font-medium text-on-surface">Oct 12 • Day 13</span>
+<span class="inline-flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+<span>Flow state</span>
+</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          “Speaking aloud during coffee felt effortless today. Almost didn’t think about opening the timer.”
+        </p>
+</article>
+</div>
+</section>
+<!-- Section 8: Footer / Management Actions -->
+<section class="flex flex-col gap-space-xs pt-space-xs">
+<button class="w-full h-12 rounded-2xl bg-primary text-on-primary font-label-lg text-label-lg font-medium shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2" type="button">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+<span>Log Today’s Practice</span>
+</button>
+<div class="flex items-center justify-center gap-4 py-2">
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+        Edit habit schedule
+      </button>
+<span class="text-outline text-[12px]">•</span>
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+        Adjust anchor trigger
+      </button>
+</div>
+</section>
+</div>
+<script>
+  (function() {
+    const buildBtn = document.getElementById('mode-build');
+    const reductionBtn = document.getElementById('mode-reduction');
+    const reductionCard = document.getElementById('reduction-preview-card');
+
+    if (buildBtn && reductionBtn && reductionCard) {
+      reductionBtn.addEventListener('click', () => {
+        reductionBtn.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        reductionBtn.classList.remove('text-on-surface-variant');
+
+        buildBtn.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        buildBtn.classList.add('text-on-surface-variant');
+
+        reductionCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        reductionCard.classList.add('ring-2', 'ring-primary/40');
+        setTimeout(() => {
+          reductionCard.classList.remove('ring-2', 'ring-primary/40');
+        }, 1600);
+      });
+
+      buildBtn.addEventListener('click', () => {
+        buildBtn.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        buildBtn.classList.remove('text-on-surface-variant');
+
+        reductionBtn.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        reductionBtn.classList.add('text-on-surface-variant');
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  })();
+</script></main></body></html>
