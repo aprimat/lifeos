@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, Platform } from 'react-native';
 
 import { IconTile } from '@/components/card';
 import { Icon } from '@/components/icon';
@@ -96,7 +96,8 @@ export function HabitRow({
   const c = useColors();
   return (
     <Pressable
-      accessibilityRole="button"
+      // Web: rows may contain their own buttons; avoid nested <button> elements.
+      accessibilityRole={Platform.OS === 'web' ? 'link' : 'button'}
       accessibilityLabel={habit.title}
       onPress={onPress ?? (() => router.push(`/habit/${habit.id}`))}
       style={({ pressed }) => [styles.row, { backgroundColor: c.inset, opacity: pressed ? 0.8 : 1 }]}>
