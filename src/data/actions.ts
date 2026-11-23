@@ -473,3 +473,11 @@ export function applySuggestion(habitId: ID, change: SuggestedChange, from: ISOD
 export function exportData(): UserData {
   return data();
 }
+
+// ---------------- Onboarding ----------------
+
+/** Mark onboarding finished (first item created, or the user chose "decide later"). */
+export async function completeOnboarding() {
+  const { user, updateUser } = useStore.getState();
+  if (user && !user.onboardingCompletedAt) await updateUser({ onboardingCompletedAt: new Date().toISOString() });
+}
