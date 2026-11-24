@@ -17,6 +17,7 @@ import { LockGate } from '@/components/lock-gate';
 import { syncMilestones } from '@/data/actions';
 import { flushSave, useStore } from '@/data/store';
 import { useColorMode, useColors } from '@/hooks/use-theme';
+import { useOverTheAirUpdates } from '@/services/app-updates';
 import { syncNotifications } from '@/services/notifications';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -27,6 +28,7 @@ export default function RootLayout() {
   const init = useStore((s) => s.init);
   const mode = useColorMode();
   const c = useColors();
+  useOverTheAirUpdates();
 
   useEffect(() => {
     init();

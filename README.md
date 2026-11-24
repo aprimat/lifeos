@@ -19,29 +19,36 @@ npm run android     # development build on an Android emulator/device (needs And
 npm run ios         # development build on iOS (needs macOS + Xcode)
 ```
 
-LifeOS only uses modules bundled in **Expo Go** (SDK 58), so on phones you can run it there
-(Face ID doesn't work in Expo Go on iOS). In the browser, biometrics and notifications are turned off.
+For quick local testing, LifeOS also runs in **Expo Go** (SDK 58) via `npx expo start` (Face ID
+doesn't work in Expo Go on iOS). In the browser, biometrics and notifications are turned off.
 
-To try the app with realistic history, open **Profile & settings → Load sample data** (dev and preview only).
+To try the app with realistic history, open **Profile & settings → Load sample data** (dev and TestFlight builds).
 
-## Over-the-air updates (EAS Update)
+## TestFlight build + over-the-air updates
 
-The project is linked to EAS (`@aprimat-team/lifeos`). Testers open the latest `preview` update in
-Expo Go — no PC or dev server needed:
+The project is linked to EAS (`@aprimat-team/lifeos`). Builds run in the cloud — no Mac needed.
 
-```
-exp://u.expo.dev/b5526673-8e1e-4783-a8bb-af130496c540?runtime-version=exposdk:58.0.0&channel-name=preview
-```
-
-Publish a new one with:
+**One-time: build and send to TestFlight** (asks for your Apple ID; run it in your own terminal):
 
 ```bash
-npm run update:preview -- "What changed"
+npm run build:testflight
 ```
 
-Expo Go only accepts updates with runtime `exposdk:<sdk>`, so `runtimeVersion` uses the `sdkVersion`
-policy. When standalone builds are introduced, revisit this (e.g. switch to `fingerprint`) so native
-changes can't receive incompatible updates. The preview EAS environment sets `EXPO_PUBLIC_DEV_TOOLS=1`.
+**Every change after that** (JavaScript, styles, images):
+
+```bash
+npm run update:testflight -- "What changed"
+```
+
+The installed app checks for updates on launch and when brought back to the foreground, downloads them
+in the background, then asks **Update ready → Restart**. "Later" applies it on the next cold start.
+
+`runtimeVersion` uses the `appVersion` policy: updates reach builds with the same `version` (currently
+1.0.0). **Adding a native module, changing native config in app.json or upgrading the SDK needs a new
+build** — bump `version` first so older builds never receive incompatible code.
+
+The production EAS environment currently sets `EXPO_PUBLIC_DEV_TOOLS=1` (sample data, design gallery)
+for testing. Delete it with `npx eas-cli env:delete` before the App Store release.
 
 ## Code map
 
