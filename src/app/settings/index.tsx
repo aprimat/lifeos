@@ -21,6 +21,7 @@ import type { FocusArea, ThemePreference } from '@/domain/types';
 import { useColors } from '@/hooks/use-theme';
 import { normalizeEmail, validateEmail } from '@/services/auth';
 import { authenticate, biometricAvailability } from '@/services/biometrics';
+import { runningUpdateLabel } from '@/services/app-updates';
 import { shareExport } from '@/services/export';
 import { cancelAllNotifications, requestPermission } from '@/services/notifications';
 import { radius, spacing } from '@/theme/tokens';
@@ -239,7 +240,12 @@ export default function SettingsRoute() {
       <SectionHeader title="About" />
       <Group>
         <ListRow title="LifeOS principles" subtitle="How LifeOS works, and support guidance" icon="menu-book" onPress={() => router.push('/settings/principles')} />
-        <ListRow title="Version" icon="info-outline" value={Constants.expoConfig?.version ?? '1.0.0'} />
+        <ListRow
+          title="Version"
+          subtitle={runningUpdateLabel() ?? undefined}
+          icon="info-outline"
+          value={Constants.expoConfig?.version ?? '1.0.0'}
+        />
         {DEV_TOOLS ? (
           <ListRow title="Design system" subtitle="Developer only — tokens and components" icon="palette" onPress={() => router.push('/dev')} />
         ) : null}
