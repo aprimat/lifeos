@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
-import { Button } from '@/components/button';
+import { Button, IconButton } from '@/components/button';
 import { Card, IconTile, Row, Stack } from '@/components/card';
 import { Group, ListRow } from '@/components/controls';
 import { Icon } from '@/components/icon';
@@ -101,39 +101,81 @@ export function HabitHeader({ habit, occ }: { habit: Habit; occ: Occurrence }) {
   );
 }
 
-/** Edit / pause / archive. */
-export function HabitActions({ habit }: { habit: Habit }) {
-  const [confirm, setConfirm] = useState(false);
+/** Shown in the body of an archived habit's details. */
+export function ArchivedBanner({ habit }: { habit: Habit }) {
+  if (habit.status !== 'archived') return null;
+  return <Banner icon="inventory-2" body="This habit is archived. Its history is kept and still appears in your progress." />;
+}
+
+/**
+ * "⋯" button for the top bar: edit / progress / pause / archive in one sheet.
+ * The archive confirmation reuses the same sheet so two modals never stack.
+ */
+export function HabitMenu({ habit }: { habit: Habit }) {
+  const [mode, setMode] = useState<'closed' | 'menu' | 'archive'>('closed');
+  const archived = habit.status === 'archived';
   const paused = habit.status === 'paused';
-  if (habit.status === 'archived') {
-    return (
-      <Banner icon="inventory-2" body="This habit is archived. Its history is kept and still appears in your progress." />
-    );
-  }
+  const close = () => setMode('closed');
+  const go = (path: string) => {
+    close();
+    router.push(path as never);
+  };
+
   return (
     <>
-      <Group>
-        <ListRow title="Edit habit" subtitle="Target, schedule, reminder" icon="tune" onPress={() => router.push(`/habit/${habit.id}/edit`)} />
-        <ListRow title="View progress" subtitle="Calendar, trends and reflections" icon="insights" onPress={() => router.push(`/habit/${habit.id}/progress`)} />
-        <ListRow
-          title={paused ? 'Resume habit' : 'Pause habit'}
-          subtitle={paused ? 'Pick up again from today' : "Paused days don't count as missed"}
-          icon={paused ? 'play-circle-outline' : 'pause-circle-outline'}
-          onPress={() => (paused ? resumeHabit(habit.id) : pauseHabit(habit.id))}
-        />
-        <ListRow title="Archive habit" subtitle="Keeps all history" icon="inventory-2" onPress={() => setConfirm(true)} />
-      </Group>
-      <ConfirmSheet
-        visible={confirm}
-        onClose={() => setConfirm(false)}
-        title="Archive this habit?"
-        body="It will stop appearing on Today. Everything you've logged stays in your history."
-        confirmLabel="Archive"
-        onConfirm={() => {
-          archiveHabit(habit.id);
-          setConfirm(false);
-        }}
+      <IconButton
+        icon={Platform.OS === 'ios' ? 'more-horiz' : 'more-vert'}
+        accessibilityLabel="Habit actions"
+        onPress={() => setMode('menu')}
       />
+      <Sheet
+        visible={mode !== 'closed'}
+        onClose={close}
+        title={mode === 'archive' ? 'Archive this habit?' : habit.title}>
+        {mode === 'archive' ? (
+          <>
+            <Text variant="bodyMd" tone="secondary">
+              It will stop appearing on Today. Everything you&apos;ve logged stays in your history.
+            </Text>
+            <Button
+              title="Archive"
+              onPress={() => {
+                archiveHabit(habit.id);
+                close();
+              }}
+            />
+            <Button title="Cancel" variant="ghost" onPress={() => setMode('menu')} />
+          </>
+        ) : (
+          <Group>
+            {!archived ? (
+              <ListRow title="Edit habit" subtitle="Target, schedule, reminder" icon="tune" onPress={() => go(`/habit/${habit.id}/edit`)} />
+            ) : null}
+            <ListRow
+              title="View progress"
+              subtitle="Calendar, trends and reflections"
+              icon="insights"
+              onPress={() => go(`/habit/${habit.id}/progress`)}
+            />
+            {!archived ? (
+              <>
+                <ListRow
+                  title={paused ? 'Resume habit' : 'Pause habit'}
+                  subtitle={paused ? 'Pick up again from today' : "Paused days don't count as missed"}
+                  icon={paused ? 'play-circle-outline' : 'pause-circle-outline'}
+                  onPress={() => {
+                    if (paused) resumeHabit(habit.id);
+                    else pauseHabit(habit.id);
+                    close();
+                  }}
+                />
+                <ListRow title="Archive habit" subtitle="Keeps all history" icon="inventory-2" onPress={() => setMode('archive')} />
+              </>
+            ) : null}
+            <ListRow title="Profile & settings" icon="settings" onPress={() => go('/settings')} />
+          </Group>
+        )}
+      </Sheet>
     </>
   );
 }

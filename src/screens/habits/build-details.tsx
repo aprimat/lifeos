@@ -23,7 +23,7 @@ import { successHaptic } from '@/services/haptics';
 import { elapsedMs, formatClock, useTimer } from '@/services/timer';
 import { radius, spacing } from '@/theme/tokens';
 
-import { HabitActions, HabitHeader, STATUS_LABEL, statusTone } from './common';
+import { ArchivedBanner, HabitHeader, HabitMenu, STATUS_LABEL, statusTone } from './common';
 
 export function BuildHabitDetails({ habit }: { habit: Habit }) {
   const c = useColors();
@@ -108,8 +108,9 @@ export function BuildHabitDetails({ habit }: { habit: Habit }) {
   const logged = !!log || !!restToday;
 
   return (
-    <Screen title="Habit details" back avatar>
+    <Screen title="Habit details" back right={<HabitMenu habit={habit} />}>
       <HabitHeader habit={habit} occ={occ} />
+      <ArchivedBanner habit={habit} />
 
       {v.anchor ? (
         <Card inset>
@@ -314,8 +315,6 @@ export function BuildHabitDetails({ habit }: { habit: Habit }) {
           “Sustainable habits bend with real life. Every return to the practice counts.”
         </Text>
       </Card>
-
-      <HabitActions habit={habit} />
 
       <Sheet visible={!!valueSheet} onClose={() => setValueSheet(null)} title={valueSheet?.title}>
         {valueSheet ? (

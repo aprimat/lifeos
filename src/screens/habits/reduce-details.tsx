@@ -23,7 +23,7 @@ import { useColors } from '@/hooks/use-theme';
 import { successHaptic } from '@/services/haptics';
 import { spacing } from '@/theme/tokens';
 
-import { ConfirmSheet, HabitActions, HabitHeader, SafetySheet } from './common';
+import { ArchivedBanner, ConfirmSheet, HabitHeader, HabitMenu, SafetySheet } from './common';
 
 export function ReduceHabitDetails({ habit }: { habit: Habit }) {
   const c = useColors();
@@ -91,8 +91,9 @@ export function ReduceHabitDetails({ habit }: { habit: Habit }) {
   };
 
   return (
-    <Screen title="Habit details" back avatar>
+    <Screen title="Habit details" back right={<HabitMenu habit={habit} />}>
       <HabitHeader habit={habit} occ={occ} />
+      <ArchivedBanner habit={habit} />
 
       <Card>
         <Row justify="space-between" align="flex-start">
@@ -323,8 +324,6 @@ export function ReduceHabitDetails({ habit }: { habit: Habit }) {
         title="Reducing is not depriving"
         body="When you notice an urge and log it, you've already created a pause between impulse and action."
       />
-
-      <HabitActions habit={habit} />
 
       <Sheet visible={limitSheet} onClose={() => setLimitSheet(false)} title="Daily limit">
         <Stepper value={newLimit} onChange={setNewLimit} min={0} max={9999} step={step} unit={unit} large />
