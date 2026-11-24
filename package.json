@@ -61,6 +61,7 @@
     "typecheck": "tsc --noEmit",
     "device:add": "npx -y eas-cli@latest device:create",
     "build:ios": "npx -y eas-cli@latest build --platform ios --profile preview",
+    "release:ios": "zsh scripts/ios-release.sh",
     "update:ios": "npx -y eas-cli@latest update --channel preview --environment preview --platform ios --non-interactive --message",
     "update:expo-go": "LIFEOS_EXPO_GO=1 npx -y eas-cli@latest update --channel preview --environment preview --platform ios --non-interactive --message"
   },
