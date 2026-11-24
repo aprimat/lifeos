@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Platform, View } from 'react-native';
 
+import { DEV_TOOLS } from '@/config/flags';
 import { Button } from '@/components/button';
 import { Divider, Row } from '@/components/card';
 import { ChipGroup, Group, ListRow, SegmentedControl, TextField, TimePicker, ToggleRow } from '@/components/controls';
@@ -239,10 +240,10 @@ export default function SettingsRoute() {
       <Group>
         <ListRow title="LifeOS principles" subtitle="How LifeOS works, and support guidance" icon="menu-book" onPress={() => router.push('/settings/principles')} />
         <ListRow title="Version" icon="info-outline" value={Constants.expoConfig?.version ?? '1.0.0'} />
-        {__DEV__ ? (
+        {DEV_TOOLS ? (
           <ListRow title="Design system" subtitle="Developer only — tokens and components" icon="palette" onPress={() => router.push('/dev')} />
         ) : null}
-        {__DEV__ ? (
+        {DEV_TOOLS ? (
           <ListRow
             title="Load sample data"
             subtitle="Developer only — replaces your data with an example"

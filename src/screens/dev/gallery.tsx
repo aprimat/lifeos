@@ -2,6 +2,7 @@ import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { DEV_TOOLS } from '@/config/flags';
 import { Button, IconButton } from '@/components/button';
 import { Card, IconTile, Row, Stack } from '@/components/card';
 import {
@@ -50,7 +51,7 @@ export function Gallery() {
   const [time, setTime] = useState('08:00');
   const [sheet, setSheet] = useState(false);
 
-  if (!__DEV__) return <Redirect href="/today" />;
+  if (!DEV_TOOLS) return <Redirect href="/today" />;
 
   const breakdown = { ...emptyBreakdown(), eligible: 10, done: 7, full: 5, minimum: 2, skipped: 1, missed: 2 };
   const statuses: DayStatus[] = ['full', 'minimum', 'partial', 'skipped', 'missed', 'rest', 'over', 'upcoming', 'none'];

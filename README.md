@@ -19,10 +19,29 @@ npm run android     # development build on an Android emulator/device (needs And
 npm run ios         # development build on iOS (needs macOS + Xcode)
 ```
 
-LifeOS uses native modules (biometric lock, notifications, secure storage), so on phones it runs as a
-**development build**, not in Expo Go. In the browser, biometrics and notifications are turned off.
+LifeOS only uses modules bundled in **Expo Go** (SDK 58), so on phones you can run it there
+(Face ID doesn't work in Expo Go on iOS). In the browser, biometrics and notifications are turned off.
 
-To try the app with realistic history, open **Profile & settings → Load sample data** (development builds only).
+To try the app with realistic history, open **Profile & settings → Load sample data** (dev and preview only).
+
+## Over-the-air updates (EAS Update)
+
+The project is linked to EAS (`@aprimat-team/lifeos`). Testers open the latest `preview` update in
+Expo Go — no PC or dev server needed:
+
+```
+exp://u.expo.dev/b5526673-8e1e-4783-a8bb-af130496c540?runtime-version=exposdk:58.0.0&channel-name=preview
+```
+
+Publish a new one with:
+
+```bash
+npm run update:preview -- "What changed"
+```
+
+Expo Go only accepts updates with runtime `exposdk:<sdk>`, so `runtimeVersion` uses the `sdkVersion`
+policy. When standalone builds are introduced, revisit this (e.g. switch to `fingerprint`) so native
+changes can't receive incompatible updates. The preview EAS environment sets `EXPO_PUBLIC_DEV_TOOLS=1`.
 
 ## Code map
 

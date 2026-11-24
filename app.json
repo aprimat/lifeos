@@ -56,6 +56,18 @@
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true
+    },
+    "owner": "aprimat-team",
+    "extra": {
+      "eas": {
+        "projectId": "b5526673-8e1e-4783-a8bb-af130496c540"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b5526673-8e1e-4783-a8bb-af130496c540"
     }
   }
 }
