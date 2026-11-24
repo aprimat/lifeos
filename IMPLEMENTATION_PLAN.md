@@ -1,6 +1,6 @@
 # LifeOS — MVP Implementation Plan
 
-**Status:** Draft for review
+**Status:** MVP implemented on branch `feature/mvp` (see §8 for differences from this plan)
 **Version:** 1.0
 **Last updated:** November 22, 2026
 **Inputs:** `LifeOS_App_Plan.md` (v1.3, the source of truth for product decisions) and the Stitch screens in `stitch_lifeos_habit_tracker_ios/`, including `lifeos_quiet_systematic/DESIGN.md`.
@@ -455,7 +455,27 @@ Build these components: Button (primary / secondary / ghost), Card, InsetCard, C
 | M5 Insight | 9.1 – 9.3 | Progress, habit progress, weekly review with suggestions |
 | M6 Settings and polish | 10.1 – 11.5 | Reminders, settings, lock, export/delete, accessibility, device testing |
 
-## 8. Ready for a future backend
+## 8. Implementation notes (what was built differently, and why)
+
+Recorded 2026-11-22 during the MVP build.
+
+| Plan | Built | Why |
+|---|---|---|
+| `expo-sqlite` + Drizzle ORM | One JSON document per user in AsyncStorage, behind the same `Repository` interface (`src/data/repository.ts`) | Works the same on iOS, Android and web (which made automated UI testing in a browser possible). An MVP user's history stays small. The interface is unchanged, so SQLite or an API can replace it later |
+| TanStack Query hooks | A Zustand store holds the signed-in user's data in memory; every write goes through `src/data/actions.ts` and is saved after a short delay | No network layer yet, so a query cache added complexity without benefit. Swap it in with the backend |
+| `react-hook-form` + `zod` | Plain component state with inline validation | The forms are small; fewer dependencies |
+| `Stack.Protected` route guards | A small redirect effect in `src/app/_layout.tsx` | The guard produced an unmatched `/(auth)` URL on web |
+| Template milestones per habit ("20 speaking sessions") | Milestones count total sessions in the commitment ("45 practice sessions") | Milestones aren't linked to a single habit in the data model |
+| Stock photos from Stitch | Soft gradient panels in the colour tokens | Licensing; see §3.2 |
+
+Also added beyond the plan: a development-only **Load sample data** row in Settings, and an app icon in the design colours.
+
+**Acceptance status (2026-11-23).** Every step in §6 is implemented. Verified with 49 automated tests (core logic coverage: 97% of statements), typecheck, lint, `expo-doctor`, browser UI testing at phone size, and Android emulator testing in Expo Go. Not verifiable on the build machine:
+- **iOS** (no Mac). Run `docs/TEST_SCRIPT.md` on an iPhone, e.g. with an EAS development build (`eas build --profile development --platform ios`).
+- **Local Android development build (2.3).** The C++ build exceeds the Windows 260-character path limit. Enable `LongPathsEnabled` in Windows or use EAS cloud builds (`eas.json` is set up).
+- Supporting docs: `docs/TEST_SCRIPT.md` (11.4) and `docs/STORE_LISTING.md` (11.5). The design-system gallery is under Settings → Design system in development builds (1.2–1.3).
+
+## 9. Ready for a future backend
 - Screens only use hooks, hooks only use repository interfaces, and repositories are the only code that knows about SQLite.
 - All IDs are UUIDs and all rows have `updatedAt`, so the data is ready for later sync.
 - Local authentication sits behind an `AuthService` interface and will be replaced by real backend authentication. Local password hashes are then discarded.
