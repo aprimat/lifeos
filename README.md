@@ -24,7 +24,7 @@ doesn't work in Expo Go on iOS). In the browser, biometrics and notifications ar
 
 To try the app with realistic history, open **Profile & settings → Load sample data** (dev and internal preview builds).
 
-## TestFlight build + over-the-air updates
+## iPhone build + over-the-air updates
 
 The project is linked to EAS (`@aprimat-team/lifeos`). Builds run in the cloud — no Mac needed.
 
