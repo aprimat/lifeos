@@ -70,21 +70,21 @@ export function generateSuggestions(input: SuggestionInput): Suggestion[] {
     const b = habitBreakdown(habit, start, end, idx, today);
 
     // S3 — several misses/skips in a row → pause or plan rest (checked first; most supportive).
-    let streakOfMisses = 0;
+    let missesInRow = 0;
     for (let d = end; d >= start; d = addDays(d, -1)) {
       const o = occurrence(habit, d, idx, today);
       if (!o.eligible) continue;
-      if (o.status === 'missed' || o.status === 'skipped' || o.status === 'notLogged') streakOfMisses++;
+      if (o.status === 'missed' || o.status === 'skipped' || o.status === 'notLogged') missesInRow++;
       else break;
     }
-    if (streakOfMisses >= 3) {
+    if (missesInRow >= 3) {
       out.push({
         ...base,
         id: id('S3'),
         rule: 'S3',
         title: 'Take a short pause',
         body: `“${habit.title}” hasn't fit your days lately. A planned one-week pause keeps your history intact and gives you room to restart calmly.`,
-        evidence: `${streakOfMisses} planned sessions in a row weren't logged.`,
+        evidence: `${missesInRow} planned sessions in a row weren't logged.`,
         change: { kind: 'pause', days: 7 },
       });
       continue;

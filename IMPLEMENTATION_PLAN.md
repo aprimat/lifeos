@@ -470,6 +470,11 @@ Recorded 2026-11-22 during the MVP build.
 
 Also added beyond the plan: a development-only **Load sample data** row in Settings, and an app icon in the design colours.
 
+**Acceptance status (2026-11-23).** Every step in §6 is implemented. Verified with 49 automated tests (core logic coverage: 97% of statements), typecheck, lint, `expo-doctor`, browser UI testing at phone size, and Android emulator testing in Expo Go. Not verifiable on the build machine:
+- **iOS** (no Mac). Run `docs/TEST_SCRIPT.md` on an iPhone, e.g. with an EAS development build (`eas build --profile development --platform ios`).
+- **Local Android development build (2.3).** The C++ build exceeds the Windows 260-character path limit. Enable `LongPathsEnabled` in Windows or use EAS cloud builds (`eas.json` is set up).
+- Supporting docs: `docs/TEST_SCRIPT.md` (11.4) and `docs/STORE_LISTING.md` (11.5). The design-system gallery is under Settings → Design system in development builds (1.2–1.3).
+
 ## 9. Ready for a future backend
 - Screens only use hooks, hooks only use repository interfaces, and repositories are the only code that knows about SQLite.
 - All IDs are UUIDs and all rows have `updatedAt`, so the data is ready for later sync.

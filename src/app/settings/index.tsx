@@ -240,6 +240,9 @@ export default function SettingsRoute() {
         <ListRow title="LifeOS principles" subtitle="How LifeOS works, and support guidance" icon="menu-book" onPress={() => router.push('/settings/principles')} />
         <ListRow title="Version" icon="info-outline" value={Constants.expoConfig?.version ?? '1.0.0'} />
         {__DEV__ ? (
+          <ListRow title="Design system" subtitle="Developer only — tokens and components" icon="palette" onPress={() => router.push('/dev')} />
+        ) : null}
+        {__DEV__ ? (
           <ListRow
             title="Load sample data"
             subtitle="Developer only — replaces your data with an example"

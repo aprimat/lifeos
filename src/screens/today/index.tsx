@@ -87,6 +87,12 @@ export function TodayScreen() {
   );
   const showYesterday = isToday && yesterdayMissed.length > 0 && !data.dismissedPrompts.includes(`yesterday:${yesterday}`);
 
+  // Commitments that reached their end date and still await a look back (plan 7.3).
+  const finished = data.commitments.filter((k) => {
+    const end = commitmentEndDate(k);
+    return k.status === 'active' && !!end && end < today;
+  });
+
   // Weekly review prompt: Mon–Wed, if last week isn't reviewed and there was a plan last week.
   const lastWeek = addDays(weekStart, -7);
   const reviewed = data.weeklyReviews.some((r) => r.weekStart === lastWeek && r.completedAt);
@@ -201,6 +207,23 @@ export function TodayScreen() {
               </Text>
             )}
           </Card>
+
+          {isToday
+            ? finished.map((k) => (
+                <Card key={k.id} selected onPress={() => router.push(`/commitment/${k.id}/complete`)} accessibilityLabel={`Look back on ${k.title}`}>
+                  <Row align="flex-start" gap={spacing.md}>
+                    <Icon name="flag" size={22} color={c.primaryText} />
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <Text variant="labelLg">{k.title} has reached its end date</Text>
+                      <Text variant="bodySm" tone="secondary">
+                        Take a moment to look back and choose what comes next. Your goal continues.
+                      </Text>
+                    </View>
+                    <Icon name="chevron-right" size={20} color={c.textTertiary} />
+                  </Row>
+                </Card>
+              ))
+            : null}
 
           {showYesterday ? (
             <Card inset>

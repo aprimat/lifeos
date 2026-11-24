@@ -6,6 +6,7 @@ Built with Expo (SDK 58) and React Native for iOS and Android. No backend yet; d
 - Product decisions: [`LifeOS_App_Plan.md`](LifeOS_App_Plan.md)
 - MVP implementation plan: [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)
 - UI designs (Stitch): [`stitch_lifeos_habit_tracker_ios/`](stitch_lifeos_habit_tracker_ios/)
+- Manual test script: [`docs/TEST_SCRIPT.md`](docs/TEST_SCRIPT.md) · Store listing draft: [`docs/STORE_LISTING.md`](docs/STORE_LISTING.md)
 
 ## Run it
 
