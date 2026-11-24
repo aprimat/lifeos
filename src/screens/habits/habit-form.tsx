@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -284,7 +284,11 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
   };
 
   // ---- Save ----
+  // A fast double tap on Save must not create the habit twice.
+  const saving = useRef(false);
   const save = async (acknowledged: boolean) => {
+    if (saving.current) return;
+    saving.current = true;
     const version = buildVersion(f, sensitive);
     if (editing && habit) {
       const before = currentVersion(habit);
@@ -746,7 +750,15 @@ function BuildFields({ f, set }: { f: FormState; set: (p: Partial<FormState>) =>
             { value: 'quantity', label: 'Amount' },
           ]}
           value={f.trackingType}
-          onChange={(t) => set({ trackingType: t as TrackingType, target: t === 'duration' ? 10 : t === 'quantity' ? 5 : 1, minimum: t === 'quantity' ? 1 : 2 })}
+          onChange={(t) =>
+            set({
+              trackingType: t as TrackingType,
+              target: t === 'duration' ? 10 : t === 'quantity' ? 5 : 1,
+              minimum: t === 'quantity' ? 1 : 2,
+              // An amount isn't measured in minutes; let the user name the unit.
+              unit: t === 'quantity' && f.unit === 'min' ? '' : f.unit,
+            })
+          }
         />
       </Field>
 
@@ -856,6 +868,16 @@ function ReduceFields({
 }) {
   const triggerOptions = Array.from(new Set([...DEFAULT_TRIGGERS, ...f.triggers]));
   const unitLabel = f.reduceUnit || 'times';
+  // The custom-unit field keeps its own text, so typing "minutes" or "timeslots" isn't cut
+  // off when the text passes through "min" or "times". It follows outside changes (a chip
+  // tap, or the unit set from the behaviour, e.g. drinks).
+  const isChipUnit = (u: string) => u === 'min' || u === 'times';
+  const [customUnit, setCustomUnit] = useState(isChipUnit(f.reduceUnit) ? '' : f.reduceUnit);
+  const [shownUnit, setShownUnit] = useState(f.reduceUnit);
+  if (shownUnit !== f.reduceUnit) {
+    setShownUnit(f.reduceUnit);
+    if (f.reduceUnit !== (customUnit.trim() || 'times')) setCustomUnit(isChipUnit(f.reduceUnit) ? '' : f.reduceUnit);
+  }
   return (
     <>
       <Field label="Approach">
@@ -890,8 +912,11 @@ function ReduceFields({
           onChange={(v) => set({ reduceUnit: v as string })}
         />
         <TextField
-          value={f.reduceUnit === 'min' || f.reduceUnit === 'times' ? '' : f.reduceUnit}
-          onChangeText={(t) => set({ reduceUnit: t || 'times' })}
+          value={customUnit}
+          onChangeText={(t) => {
+            setCustomUnit(t);
+            set({ reduceUnit: t.trim() || 'times' });
+          }}
           placeholder="Or a custom unit, e.g. drinks, cigarettes, checks"
           maxLength={16}
           accessibilityLabel="Custom unit"

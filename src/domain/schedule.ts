@@ -61,6 +61,11 @@ export function versionOn(habit: Habit, date: ISODate): HabitVersion {
   return found;
 }
 
+/** Is the habit inside a pause range on this date? */
+export function isPausedOn(habit: Habit, date: ISODate): boolean {
+  return habit.status !== 'archived' && inAnyRange(date, habit.pauses);
+}
+
 export function currentVersion(habit: Habit): HabitVersion {
   return habit.versions[habit.versions.length - 1];
 }
@@ -85,7 +90,7 @@ function inAnyRange(date: ISODate, ranges: { start: ISODate; end: ISODate | null
 /** Is the habit "live" on this date (started, not archived/paused, commitment running)? */
 export function isHabitActiveOn(habit: Habit, date: ISODate, idx: DataIndex): boolean {
   if (date < habit.startDate) return false;
-  if (habit.archivedAt && date >= habit.archivedAt) return false;
+  if (habit.archivedAt && date > habit.archivedAt) return false;
   if (inAnyRange(date, habit.pauses)) return false;
   if (habit.commitmentId) {
     const c = idx.commitmentsById.get(habit.commitmentId);
@@ -170,6 +175,20 @@ function statusFromLog(habit: Habit, version: HabitVersion, log: ActivityLog): D
   return log.status as DayStatus;
 }
 
+/**
+ * Can a session be moved onto `target`? Only onto a free day: the habit is live there,
+ * it isn't already scheduled, moved-into, logged or a planned rest day. Otherwise the
+ * moved session would merge into the existing one and quietly disappear.
+ */
+export function canRescheduleTo(habit: Habit, target: ISODate, idx: DataIndex): boolean {
+  if (!isHabitActiveOn(habit, target, idx)) return false;
+  if (exceptionFor(habit, target, idx)) return false;
+  if (getLog(idx, habit.id, target)) return false;
+  if (idx.rescheduledInto.get(habit.id)?.has(target)) return false;
+  const version = versionOn(habit, target);
+  return version.schedule.type !== 'flexWeekly' && !scheduleMatches(version.schedule, target);
+}
+
 export function occurrence(habit: Habit, date: ISODate, idx: DataIndex, today: ISODate): Occurrence {
   const version = versionOn(habit, date);
   const log = getLog(idx, habit.id, date);
@@ -233,7 +252,7 @@ export function logAmount(build: BuildConfig | null, log: ActivityLog): number {
 /** Choose a build-habit status from an entered value. */
 export function statusForValue(build: BuildConfig, value: number): 'full' | 'minimum' | 'partial' {
   if (value >= build.target) return 'full';
-  if (build.minimum !== null && value <= build.minimum) return 'minimum';
+  if (build.minimum !== null && value === build.minimum) return 'minimum';
   return 'partial';
 }
 

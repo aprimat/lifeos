@@ -139,6 +139,8 @@ export function habitBreakdown(
   end: ISODate,
   idx: DataIndex,
   today: ISODate,
+  /** Also count a flexible week that starts inside the range but ends after it (a commitment's final week). */
+  includeTrailingWeek = false,
 ): Breakdown {
   const b = emptyBreakdown();
   const last = minDate(end, today);
@@ -157,7 +159,10 @@ export function habitBreakdown(
   let ws = startOfWeek(maxDate(start, habit.startDate));
   while (ws <= last) {
     const we = addDays(ws, 6);
-    const attributed = (we >= start && we <= end) || (ws <= today && today <= we && today >= start && today <= end);
+    const attributed =
+      (we >= start && we <= end) ||
+      (ws <= today && today <= we && today >= start && today <= end) ||
+      (includeTrailingWeek && ws <= end && we > end);
     const anyFlex = eachDay(ws, we).some((d) => d >= habit.startDate && versionOn(habit, d).schedule.type === 'flexWeekly');
     if (attributed && anyFlex) {
       total = addBreakdown(total, flexWeek(habit, ws, idx, today).breakdown);
@@ -173,8 +178,9 @@ export function habitsBreakdown(
   end: ISODate,
   idx: DataIndex,
   today: ISODate,
+  includeTrailingWeek = false,
 ): Breakdown {
-  return habits.reduce((acc, h) => addBreakdown(acc, habitBreakdown(h, start, end, idx, today)), emptyBreakdown());
+  return habits.reduce((acc, h) => addBreakdown(acc, habitBreakdown(h, start, end, idx, today, includeTrailingWeek)), emptyBreakdown());
 }
 
 /** Planned opportunities for a single day (non-flexible, not rest). */
@@ -228,7 +234,7 @@ export function commitmentProgress(
   const endDate = commitmentEndDate(c);
   const day = commitmentDay(c, today);
   const last = endDate ? minDate(endDate, today) : today;
-  const breakdown = habitsBreakdown(hs, c.startDate, last, idx, today);
+  const breakdown = habitsBreakdown(hs, c.startDate, last, idx, today, true);
 
   let plannedTotal: number | null = null;
   if (endDate) {

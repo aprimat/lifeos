@@ -59,3 +59,21 @@ Run on one iOS and one Android phone, in light and dark mode. Tick each step.
 2. Largest system text size: nothing clipped on Today, Progress and the log sheet.
 3. Screen reader: every button and check circle has a label; status isn't conveyed by colour alone.
 4. Reduced motion ON → check circles don't animate.
+
+## 10. Review fixes (PR #2)
+- [ ] **Log sheet value.** Log "8" on one amount habit, then long-press another habit on Today. Its sheet opens with its own number, with no flash of "8".
+- [ ] **Move to tomorrow.** On a daily habit, long-press → the log sheet has no **Move to tomorrow** (tomorrow is already scheduled). On a Mon/Wed/Fri habit on a Monday, the option is there. In Habit details → Reschedule, only free days are offered.
+- [ ] **Urges kept.** On a reduce habit's details, log 3 with urges on (5, intensity 4) → Save. On Today, long-press it → change to 2 → Save. The habit's progress screen still shows the urges.
+- [ ] **Reduce units.** New habit → Reduce → in "Measured in", type `minutes` in the custom unit field. It reads "minutes", not "utes". Clear the field → the **Times** chip is selected.
+- [ ] **Amount unit.** New habit → Build → tracking **Amount**. The target shows "5 times" (not "5 min"), and the unit field is empty.
+- [ ] **Double tap.** Tap **Save habit** twice quickly → only one habit appears. Tap **Create account** twice quickly → only one account is created.
+- [ ] **New goal reused.** New commitment → type a new goal name → Template → Continue → Back → Continue → the Goals tab has only one goal with that name.
+- [ ] **Old draft starts today.** Leave a commitment draft for a day, then open it and tap **Start commitment** → it shows Day 1, and earlier days aren't counted as missed.
+- [ ] **Renew mid-way.** Mid-commitment, log a habit → Commitment details → Finish and review → Renew → Confirm. Today's log stays on the old commitment, and the new one starts tomorrow. A double tap on Confirm creates only one new commitment.
+- [ ] **Pause/resume same day.** Pause a commitment, then resume it straight away → today's habits are back on Today and can be logged.
+- [ ] **Archive today.** Log a habit, then archive it the same day → today's session still shows in its history.
+- [ ] **App lock.** Settings → turn App lock on → Face ID asks once, not twice. With a sheet or the Reflection screen open, background the app for 5+ minutes → on return the lock screen covers everything. Pull down Control Center → the cover hides open sheets too.
+- [ ] **Flexible reminders.** Pause a 3×/week habit that has a reminder → no more reminders for it. After 3 sessions this week, no more reminders until Monday.
+- [ ] **Timer over midnight.** Start a timer just before midnight → after midnight Today stays on the earlier day with the timer visible. Stop it → the minutes are logged to the day it started.
+- [ ] **Back to habit.** Progress tab → open a habit's progress → **Back to habit** opens the habit details, not the Progress tab.
+- [ ] **VoiceOver.** The Today week strip and the month calendar read dates such as "Tuesday, November 24", not "2026-11-24". The 7-day status circles and the rhythm-chart bars can each be focused.

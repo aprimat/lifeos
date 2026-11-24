@@ -1,6 +1,6 @@
 import { addDays, todayISO } from '@/domain/dates';
 import { newlyReachedMilestones } from '@/domain/analytics';
-import { buildIndex, currentVersion } from '@/domain/schedule';
+import { buildIndex, commitmentEndDate, currentVersion, versionOn } from '@/domain/schedule';
 import type { SuggestedChange } from '@/domain/suggestions';
 import type {
   ActivityLog,
@@ -132,6 +132,10 @@ export function updateCommitment(id: ID, patch: Partial<Pick<Commitment, 'title'
 }
 
 export function startCommitment(id: ID) {
+  // A draft left for a few days starts today, so the days in between don't count as missed.
+  const draft = data().commitments.find((c) => c.id === id);
+  const today = todayISO();
+  if (draft && draft.status === 'draft' && draft.startDate < today) updateCommitment(id, { startDate: today });
   mutate((d) => ({ commitments: replace(d.commitments, id, { status: 'active' }) }));
 }
 
@@ -153,15 +157,22 @@ export function pauseCommitment(id: ID, start: ISODate = todayISO(), end: ISODat
   }));
 }
 
+/** Resuming: pauses that cover today end yesterday; pauses that start today or later are dropped. */
+function endPausesBefore<P extends { start: ISODate; end: ISODate | null }>(pauses: P[], today: ISODate): P[] {
+  const yesterday = addDays(today, -1);
+  return pauses
+    .map((p) => (p.end === null || p.end >= today ? { ...p, end: yesterday } : p))
+    .filter((p) => p.end! >= p.start);
+}
+
 export function resumeCommitment(id: ID) {
-  const yesterday = addDays(todayISO(), -1);
   mutate((d) => ({
     commitments: d.commitments.map((c) =>
       c.id === id
         ? {
             ...c,
             status: 'active',
-            pauses: c.pauses.map((p) => (p.end === null ? { ...p, end: p.start > yesterday ? p.start : yesterday } : p)).filter((p) => p.end! >= p.start),
+            pauses: endPausesBefore(c.pauses, todayISO()),
             updatedAt: now(),
           }
         : c,
@@ -217,7 +228,11 @@ export function renewCommitment(id: ID, opts: { durationDays: number | null; tar
   const d = data();
   const old = d.commitments.find((c) => c.id === id);
   if (!old) return null;
-  const startDate = todayISO();
+  // If the old commitment still covers today, it keeps today (and today's logs); the new one starts tomorrow.
+  const today = todayISO();
+  const oldEnd = commitmentEndDate(old);
+  const stillRunning = oldEnd === null || oldEnd >= today;
+  const startDate = stillRunning ? addDays(today, 1) : today;
   const c = entity<Omit<Commitment, 'id' | 'createdAt' | 'updatedAt'>>({
     goalId: old.goalId,
     title: old.title,
@@ -294,31 +309,47 @@ export function updateHabit(
       let versions = h.versions;
       if (versionPatch) {
         const effectiveFrom = from < h.startDate ? h.startDate : from;
-        const base = currentVersion(h);
-        const next: HabitVersion = { ...base, ...versionPatch, effectiveFrom };
-        // Same-day (or not-yet-started) edits replace instead of stacking versions.
-        versions = [...h.versions.filter((v) => v.effectiveFrom < effectiveFrom), next];
+        // Callers build the patch from the latest version, which may be a change scheduled
+        // for later (e.g. an accepted suggestion from next Monday). Apply only the fields that
+        // actually differ, on top of the version in effect on `effectiveFrom`, and carry them
+        // into any later versions instead of dropping those.
+        const latest = currentVersion(h);
+        const diff = Object.fromEntries(
+          Object.entries(versionPatch).filter(([k, val]) => JSON.stringify(val) !== JSON.stringify(latest[k as keyof HabitVersion])),
+        ) as Partial<HabitVersion>;
+        if (Object.keys(diff).length > 0) {
+          const next: HabitVersion = { ...versionOn(h, effectiveFrom), ...diff, effectiveFrom };
+          const later = h.versions.filter((v) => v.effectiveFrom > effectiveFrom).map((v) => ({ ...v, ...diff }));
+          // Same-day (or not-yet-started) edits replace instead of stacking versions.
+          versions = [...h.versions.filter((v) => v.effectiveFrom < effectiveFrom), next, ...later];
+        }
       }
       return { ...h, ...patch, versions, updatedAt: now() };
     }),
   }));
 }
 
+/**
+ * Open-ended pauses ("Pause habit") set the status to paused until resumed.
+ * A bounded pause (e.g. an accepted "pause for a week" suggestion) only adds the range,
+ * so the habit picks up again by itself when the range ends.
+ */
 export function pauseHabit(id: ID, start: ISODate = todayISO(), end: ISODate | null = null) {
   mutate((d) => ({
-    habits: d.habits.map((h) => (h.id === id ? { ...h, status: 'paused', pauses: [...h.pauses, { start, end }], updatedAt: now() } : h)),
+    habits: d.habits.map((h) =>
+      h.id === id ? { ...h, status: end === null ? 'paused' : h.status, pauses: [...h.pauses, { start, end }], updatedAt: now() } : h,
+    ),
   }));
 }
 
 export function resumeHabit(id: ID) {
-  const yesterday = addDays(todayISO(), -1);
   mutate((d) => ({
     habits: d.habits.map((h) =>
       h.id === id
         ? {
             ...h,
             status: 'active',
-            pauses: h.pauses.map((p) => (p.end === null ? { ...p, end: yesterday } : p)).filter((p) => p.end! >= p.start),
+            pauses: endPausesBefore(h.pauses, todayISO()),
             updatedAt: now(),
           }
         : h,
@@ -359,12 +390,13 @@ export type LogInput = Pick<ActivityLog, 'status'> &
 /** Create or replace the log for (habit, date). */
 export function setLog(habitId: ID, date: ISODate, input: LogInput): ID {
   const existing = data().logs.find((l) => l.habitId === habitId && l.date === date);
+  // Re-logging (e.g. changing the amount from Today) keeps urges and the note recorded earlier.
   const fields = {
     value: null,
     rescheduledTo: null,
-    urges: null,
-    urgeIntensity: null,
-    note: null,
+    urges: existing?.urges ?? null,
+    urgeIntensity: existing?.urgeIntensity ?? null,
+    note: existing?.note ?? null,
     ...input,
   };
   if (existing) {

@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Rect } from 'react-native-svg';
 
 import type { Breakdown } from '@/domain/analytics';
-import { dayOfMonth, weekdayIndex, weekdayLetter } from '@/domain/dates';
+import { dayOfMonth, formatLong, weekdayIndex, weekdayLetter } from '@/domain/dates';
 import type { DayStatus } from '@/domain/schedule';
 import { useColors } from '@/hooks/use-theme';
 import { radius, spacing } from '@/theme/tokens';
@@ -141,6 +141,7 @@ export function StatusDay({ status, size = 34, label }: { status: DayStatus | 'f
   const outlined = status === 'missed' || status === 'notLogged' || status === 'upcoming';
   return (
     <View
+      accessible
       accessibilityLabel={`${label ?? ''} ${st.label}`.trim()}
       style={{
         width: size,
@@ -182,7 +183,7 @@ export function WeekStrip({
             key={d.date}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={`${d.date}${d.planned ? `, ${d.done} of ${d.planned} done` : ''}`}
+            accessibilityLabel={`${formatLong(d.date)}${d.planned ? `, ${d.done} of ${d.planned} done` : ''}`}
             onPress={() => onSelect(d.date)}
             style={[styles.stripDay, active && { backgroundColor: c.primary }]}>
             <Text variant="labelMd" color={active ? c.onPrimary : c.textTertiary}>

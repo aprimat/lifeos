@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AppState, Platform, StyleSheet, View } from 'react-native';
+import { AppState, Modal, Platform, StyleSheet, View } from 'react-native';
 
 import { useStore } from '@/data/store';
 import { useColors } from '@/hooks/use-theme';
@@ -18,21 +18,23 @@ const RELOCK_AFTER_MS = 5 * 60 * 1000;
  */
 export function LockGate({ children }: { children: ReactNode }) {
   const c = useColors();
-  const enabled = useStore((s) => s.status === 'ready' && s.data.settings.biometricLock) && Platform.OS !== 'web';
-  const [locked, setLocked] = useState(enabled);
+  const ready = useStore((s) => s.status === 'ready');
+  const lockSetting = useStore((s) => s.data.settings.biometricLock);
+  const enabled = ready && lockSetting && Platform.OS !== 'web';
+  const [locked, setLocked] = useState(false);
   const [covered, setCovered] = useState(false);
   const backgroundedAt = useRef<number | null>(null);
   const prompting = useRef(false);
 
-  // Lock on first load when enabled (cold start).
-  const initialized = useRef(false);
-  useEffect(() => {
-    if (!initialized.current && enabled) {
-      initialized.current = true;
-      setLocked(true);
-    }
-    if (!enabled) setLocked(false);
-  }, [enabled]);
+  // Lock once when the data first loads (cold start or sign-in) with the lock on. Turning the
+  // lock on in Settings has just asked for Face ID, so it doesn't lock (and ask) again.
+  const [sawReady, setSawReady] = useState(false);
+  if (ready && !sawReady) {
+    setSawReady(true);
+    if (enabled) setLocked(true);
+  }
+  if (!ready && sawReady) setSawReady(false);
+  if (!enabled && locked) setLocked(false);
 
   useEffect(() => {
     if (!enabled) return;
@@ -52,6 +54,7 @@ export function LockGate({ children }: { children: ReactNode }) {
   }, [enabled]);
 
   const unlock = async () => {
+    if (prompting.current) return;
     prompting.current = true;
     const ok = await authenticate('Unlock LifeOS');
     prompting.current = false;
@@ -60,14 +63,17 @@ export function LockGate({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // State only changes after the Face ID prompt resolves, not synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (locked && enabled) unlock();
   }, [locked, enabled]);
 
   return (
     <View style={{ flex: 1 }}>
       {children}
-      {enabled && (locked || covered) ? (
-        <View style={[StyleSheet.absoluteFill, styles.cover, { backgroundColor: c.background }]}>
+      {/* A Modal, not a View: it must cover open sheets and modal screens too. */}
+      <Modal visible={enabled && (locked || covered)} animationType="none" onRequestClose={() => {}} statusBarTranslucent>
+        <View style={[styles.cover, { backgroundColor: c.background }]}>
           <View style={[styles.logo, { backgroundColor: c.primarySoft }]}>
             <Icon name="lock-outline" size={30} color={c.primaryText} />
           </View>
@@ -79,12 +85,12 @@ export function LockGate({ children }: { children: ReactNode }) {
           </Text>
           {locked ? <Button title="Unlock" icon="fingerprint" onPress={unlock} style={{ alignSelf: 'stretch' }} /> : null}
         </View>
-      ) : null}
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cover: { alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
+  cover: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
   logo: { width: 72, height: 72, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center' },
 });

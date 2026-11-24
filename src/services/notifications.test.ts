@@ -56,3 +56,30 @@ describe('planReminders', () => {
     expect(planReminders(d, now)).toHaveLength(0);
   });
 });
+
+describe('planReminders for flexible weekly habits', () => {
+  const today = todayISO();
+  const now = new Date();
+  now.setHours(0, 1, 0, 0);
+
+  function flex(habitPatch = {}) {
+    const h = makeHabit(
+      { startDate: addDays(today, -3), ...habitPatch },
+      { reminderTime: '08:00', effectiveFrom: addDays(today, -3), schedule: { type: 'flexWeekly', timesPerWeek: 3 } },
+    );
+    const d = emptyUserData();
+    d.settings.remindersEnabled = true;
+    d.settings.weeklyReviewReminder = false;
+    d.habits = [h];
+    return { d, h };
+  }
+
+  it('reminds while the habit is live', () => {
+    expect(planReminders(flex().d, now).length).toBeGreaterThan(0);
+  });
+
+  it('stops reminding when the habit is paused', () => {
+    const { d } = flex({ pauses: [{ start: addDays(today, -1), end: null }], status: 'paused' });
+    expect(planReminders(d, now)).toHaveLength(0);
+  });
+});

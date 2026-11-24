@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -48,10 +48,19 @@ export function ReduceHabitDetails({ habit }: { habit: Habit }) {
   const [taperConfirm, setTaperConfirm] = useState(false);
   const [safety, setSafety] = useState(false);
 
-  useEffect(() => {
+  // A new day (or a log replaced elsewhere) starts from that day's own values, so urges,
+  // triggers and the note from yesterday are never saved onto today.
+  const formKey = `${today}:${occ.log?.id ?? ''}`;
+  const [shownKey, setShownKey] = useState(formKey);
+  if (shownKey !== formKey) {
+    setShownKey(formKey);
     setValue(occ.log?.value ?? 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [today, occ.log?.id]);
+    setUrgesOn(occ.log?.urges != null);
+    setUrges(occ.log?.urges ?? 0);
+    setIntensity(occ.log?.urgeIntensity ?? null);
+    setTriggers(existingReflection?.triggers ?? []);
+    setNote(existingReflection?.note ?? '');
+  }
 
   const trend = reduceTrend(habit, today, 7, idx);
   const over = value > reduce.limit;

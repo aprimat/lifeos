@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -9,8 +9,9 @@ import { Sheet } from '@/components/sheet';
 import { Text } from '@/components/text';
 import { clearLog, markRestDay, setLog } from '@/data/actions';
 import { addDays, formatShort } from '@/domain/dates';
-import { statusForValue } from '@/domain/schedule';
+import { canRescheduleTo, statusForValue } from '@/domain/schedule';
 import type { ActivityLog, Habit, HabitVersion, ISODate } from '@/domain/types';
+import { useIndex } from '@/hooks/use-data';
 import { useTimer } from '@/services/timer';
 import { spacing } from '@/theme/tokens';
 
@@ -38,23 +39,47 @@ export function LogSheet({
   today: ISODate;
   onClose: (result?: 'skipped' | 'partial' | 'over') => void;
 }) {
-  const habit = target?.habit;
-  const v = target?.version;
-  const build = v?.build ?? null;
-  const reduce = v?.reduce ?? null;
-  const [value, setValue] = useState(0);
+  return (
+    <Sheet visible={!!target} onClose={() => onClose()} title={target?.habit.title}>
+      {target ? (
+        // Keyed so each habit/day opens with its own starting value (never the previous one's).
+        <LogSheetContent
+          key={`${target.habit.id}:${target.date}:${target.log?.id ?? ''}:${target.initialValue ?? ''}`}
+          target={target}
+          today={today}
+          onClose={onClose}
+        />
+      ) : null}
+    </Sheet>
+  );
+}
+
+function startingValue(target: LogTarget): number {
+  const { build, reduce } = target.version;
+  if (target.initialValue !== undefined) return target.initialValue;
+  if (target.log?.value !== null && target.log?.value !== undefined) return target.log.value;
+  if (reduce) return reduce.limit;
+  if (build) return Math.max(1, Math.round(build.target / 2));
+  return 0;
+}
+
+function LogSheetContent({
+  target,
+  today,
+  onClose,
+}: {
+  target: LogTarget;
+  today: ISODate;
+  onClose: (result?: 'skipped' | 'partial' | 'over') => void;
+}) {
+  const habit = target.habit;
+  const v = target.version;
+  const build = v.build ?? null;
+  const reduce = v.reduce ?? null;
+  const [value, setValue] = useState(() => startingValue(target));
   const timerHabit = useTimer((s) => s.habitId);
   const startTimer = useTimer((s) => s.start);
-
-  useEffect(() => {
-    if (!target) return;
-    if (target.initialValue !== undefined) setValue(target.initialValue);
-    else if (target.log?.value !== null && target.log?.value !== undefined) setValue(target.log.value);
-    else if (reduce) setValue(reduce.limit);
-    else if (build) setValue(Math.max(1, Math.round(build.target / 2)));
-  }, [target, build, reduce]);
-
-  if (!target || !habit || !v) return <Sheet visible={false} onClose={() => onClose()}>{null}</Sheet>;
+  const idx = useIndex();
 
   const { date, log } = target;
   const flexible = v.schedule.type === 'flexWeekly';
@@ -63,7 +88,7 @@ export function LogSheet({
   const close = (result?: 'skipped' | 'partial' | 'over') => onClose(result);
 
   return (
-    <Sheet visible onClose={() => close()} title={habit.title}>
+    <>
       <Text variant="bodySm" tone="secondary">
         {date === today ? 'Today' : formatShort(date)} · {targetLabel(v)}
       </Text>
@@ -164,7 +189,7 @@ export function LogSheet({
               }}
             />
           ) : null}
-          {!flexible && date >= today ? (
+          {!flexible && date >= today && canRescheduleTo(habit, addDays(date, 1), idx) ? (
             <Button
               size="sm"
               variant="secondary"
@@ -203,6 +228,6 @@ export function LogSheet({
           Planned rest never counts as a missed day.
         </Text>
       </View>
-    </Sheet>
+    </>
   );
 }

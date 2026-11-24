@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -23,15 +23,25 @@ export function AuthForm({ mode }: { mode: 'signIn' | 'signUp' }) {
   const [busy, setBusy] = useState(false);
   const isUp = mode === 'signUp';
 
+  const submitting = useRef(false);
   const submit = async () => {
+    if (submitting.current) return; // a fast double tap must not create two accounts
     setError(null);
     if (isUp && password !== confirm) {
       setError("Passwords don't match.");
       return;
     }
+    submitting.current = true;
     setBusy(true);
-    const err = isUp ? await signUp({ name, email, password }) : await signIn(email, password);
-    setBusy(false);
+    let err: string | null;
+    try {
+      err = isUp ? await signUp({ name, email, password }) : await signIn(email, password);
+    } catch {
+      err = 'Something went wrong. Please try again.';
+    } finally {
+      submitting.current = false;
+      setBusy(false);
+    }
     if (err) setError(err);
     // On success the root layout redirects away from (auth).
   };
