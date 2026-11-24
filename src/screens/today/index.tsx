@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Button, IconButton } from '@/components/button';
@@ -17,6 +17,7 @@ import { dailyCompletion, dailySeries, dayPlan, flexibleForDay } from '@/domain/
 import { addDays, diffDays, endOfWeek, formatLong, formatShort, startOfWeek, weekdayIndex } from '@/domain/dates';
 import { commitmentDay, commitmentEndDate, occurrence, scheduleMatches, type Occurrence } from '@/domain/schedule';
 import type { Commitment } from '@/domain/types';
+import { useTimer } from '@/services/timer';
 import { useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
@@ -36,8 +37,14 @@ export function TodayScreen() {
   const habits = useLiveHabits();
   const idx = useIndex();
 
-  // Follow the calendar when the day changes.
-  useEffect(() => setSelected(today), [today]);
+  // Follow the calendar when the day changes, unless a timer is still running for the
+  // selected day (a session started before midnight is logged to the day it began).
+  const timerDate = useTimer((t) => (t.habitId ? t.date : null));
+  const [shownToday, setShownToday] = useState(today);
+  if (shownToday !== today) {
+    setShownToday(today);
+    if (timerDate !== selected) setSelected(today);
+  }
 
   const weekStart = startOfWeek(today);
   const series = useMemo(() => dailySeries(habits, weekStart, endOfWeek(today), idx, today), [habits, idx, today, weekStart]);

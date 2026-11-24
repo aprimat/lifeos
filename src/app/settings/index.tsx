@@ -330,13 +330,15 @@ function ProfileSheet({
   const [n, setN] = useState(name);
   const [e, setE] = useState(email);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
     if (visible) {
       setN(name);
       setE(email);
       setError(null);
     }
-  }, [visible, name, email]);
+  }
   const save = () => {
     if (!n.trim()) return setError('Enter your name.');
     const emailError = validateEmail(e);
@@ -368,9 +370,11 @@ function AreasSheet({
   onSave: (v: FocusArea[]) => void;
 }) {
   const [v, setV] = useState<FocusArea[]>(value);
-  useEffect(() => {
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
     if (visible) setV(value);
-  }, [visible, value]);
+  }
   return (
     <Sheet visible={visible} onClose={onClose} title="Focus areas">
       <Text variant="bodyMd" tone="secondary">
@@ -390,9 +394,11 @@ function AreasSheet({
 function DeleteSheet({ visible, onClose, onConfirm }: { visible: boolean; onClose: () => void; onConfirm: () => Promise<void> }) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
-  useEffect(() => {
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
     if (visible) setText('');
-  }, [visible]);
+  }
   return (
     <Sheet visible={visible} onClose={onClose} title="Delete account">
       <Banner

@@ -15,8 +15,8 @@ import { clearLog, markRestDay, removeException, setLog } from '@/data/actions';
 import { useStore } from '@/data/store';
 import { habitBreakdown } from '@/domain/analytics';
 import { addDays, eachDay, formatShort, weekdayIndex, weekdayShort } from '@/domain/dates';
-import { logAmount, occurrence, statusForValue } from '@/domain/schedule';
-import type { Habit } from '@/domain/types';
+import { canRescheduleTo, logAmount, occurrence, statusForValue } from '@/domain/schedule';
+import type { Habit, ISODate } from '@/domain/types';
 import { useIndex, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
 import { successHaptic } from '@/services/haptics';
@@ -34,7 +34,7 @@ export function BuildHabitDetails({ habit }: { habit: Habit }) {
   const v = occ.version;
   const build = v.build!;
   const unit = build.trackingType === 'duration' ? 'min' : build.unit;
-  const [valueSheet, setValueSheet] = useState<null | { value: number; title: string }>(null);
+  const [valueSheet, setValueSheet] = useState<null | { value: number; title: string; date?: ISODate }>(null);
   const [rescheduleSheet, setRescheduleSheet] = useState(false);
   const [askReflection, setAskReflection] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -60,7 +60,8 @@ export function BuildHabitDetails({ habit }: { habit: Habit }) {
   };
   const logValue = (value: number) => {
     const status = statusForValue(build, value);
-    setLog(habit.id, today, { status, value });
+    // A timer started before midnight logs to the day it was started.
+    setLog(habit.id, valueSheet?.date ?? today, { status, value });
     setValueSheet(null);
     setAskReflection(status === 'partial');
     done(status === 'full' ? 'Logged. Nicely done.' : 'Logged. Every bit of practice counts.');
@@ -260,7 +261,7 @@ export function BuildHabitDetails({ habit }: { habit: Habit }) {
         </Card>
       ) : null}
 
-      {build.trackingType === 'duration' && !archived ? <TimerCard habit={habit} target={build.target} onLog={(m) => setValueSheet({ value: Math.max(1, m), title: 'Log your session' })} /> : null}
+      {build.trackingType === 'duration' && !archived ? <TimerCard habit={habit} target={build.target} onLog={(m, date) => setValueSheet({ value: Math.max(1, m), title: 'Log your session', date })} /> : null}
 
       {/* 7-day cadence */}
       <Card>
@@ -338,10 +339,15 @@ export function BuildHabitDetails({ habit }: { habit: Habit }) {
             setNote("It stays on today's plan.");
           }}
         />
-        <Button title="Tomorrow" variant="secondary" icon="event" onPress={() => reschedule(1)} />
-        <Button title={`${formatShort(addDays(today, 2))}`} variant="secondary" icon="event" onPress={() => reschedule(2)} />
+        {canRescheduleTo(habit, addDays(today, 1), idx) ? (
+          <Button title="Tomorrow" variant="secondary" icon="event" onPress={() => reschedule(1)} />
+        ) : null}
+        {canRescheduleTo(habit, addDays(today, 2), idx) ? (
+          <Button title={`${formatShort(addDays(today, 2))}`} variant="secondary" icon="event" onPress={() => reschedule(2)} />
+        ) : null}
         <Text variant="bodySm" tone="tertiary">
-          Rescheduled sessions move to the new day and aren't counted as missed.
+          Rescheduled sessions move to the new day and aren't counted as missed. Days that already have this habit
+          scheduled aren't offered.
         </Text>
       </Sheet>
     </Screen>
@@ -392,7 +398,7 @@ function ValueEntry({ initial, unit, max, onSave, hint }: { initial: number; uni
   );
 }
 
-function TimerCard({ habit, target, onLog }: { habit: Habit; target: number; onLog: (minutes: number) => void }) {
+function TimerCard({ habit, target, onLog }: { habit: Habit; target: number; onLog: (minutes: number, date: ISODate) => void }) {
   const c = useColors();
   const timer = useTimer();
   const mine = timer.habitId === habit.id;
@@ -441,8 +447,9 @@ function TimerCard({ habit, target, onLog }: { habit: Habit; target: number; onL
                 icon="stop"
                 style={{ flex: 1 }}
                 onPress={async () => {
+                  const startedOn = timer.date ?? today;
                   const minutes = await timer.stop();
-                  onLog(minutes);
+                  onLog(minutes, startedOn);
                 }}
               />
             </Row>

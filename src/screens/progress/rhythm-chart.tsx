@@ -25,6 +25,7 @@ export function RhythmChart({ columns, height = 110 }: { columns: RhythmColumn[]
           return (
             <View
               key={i}
+              accessible
               accessibilityLabel={`${col.label}: ${col.rest && !col.planned ? 'rest' : `${col.done} of ${col.planned}`}`}
               style={{ flex: 1, height, justifyContent: 'flex-end', alignItems: 'center' }}>
               {col.rest && !col.planned ? (

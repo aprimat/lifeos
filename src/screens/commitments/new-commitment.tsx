@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/button';
 import { Card, Row, Stack } from '@/components/card';
@@ -48,9 +48,16 @@ export function NewCommitment() {
   const hasGoal = !!goal || !!newGoalTitle.trim();
   const canContinue = hasGoal && (approach === 'template' || !!title.trim());
 
+  // Coming back from the next step and pressing Continue again reuses the goal created
+  // the first time instead of making a duplicate.
+  const createdGoal = useRef<{ title: string; id: string } | null>(null);
   const resolveGoal = (): string => {
     if (goal && (!pickingGoal || !newGoalTitle.trim())) return goal.id;
-    return createGoal({ title: newGoalTitle.trim(), focusArea: null, myWhy: null, desiredOutcome: null });
+    const t = newGoalTitle.trim();
+    if (createdGoal.current?.title === t && data.goals.some((g) => g.id === createdGoal.current!.id)) return createdGoal.current.id;
+    const id = createGoal({ title: t, focusArea: null, myWhy: null, desiredOutcome: null });
+    createdGoal.current = { title: t, id };
+    return id;
   };
 
   const onContinue = () => {

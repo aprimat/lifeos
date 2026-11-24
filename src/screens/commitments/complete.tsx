@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { View } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -46,6 +46,8 @@ export function CommitmentComplete() {
   const [reflection, setReflection] = useState(existing?.reflection ?? '');
   const [stillMatters, setStillMatters] = useState<'yes' | 'changed' | null>(existing?.stillMatters ?? null);
   const [next, setNext] = useState<CommitmentNextStep>(existing?.nextStep ?? 'renew');
+  // Renew/adjust create a new commitment: a double tap must not create two.
+  const confirming = useRef(false);
 
   if (!commitment) {
     return (
@@ -73,6 +75,8 @@ export function CommitmentComplete() {
     .filter(Boolean) as { habit: (typeof cHabits)[number]; from: number; to: number }[];
 
   const confirm = () => {
+    if (confirming.current) return;
+    confirming.current = true;
     saveCommitmentReview({ commitmentId: commitment.id, reflection: reflection.trim() || null, stillMatters, nextStep: next });
     switch (next) {
       case 'renew': {

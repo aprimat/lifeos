@@ -2,19 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { IconButton } from '@/components/button';
 import { Text } from '@/components/text';
-import {
-  addDays,
-  dayOfMonth,
-  eachDay,
-  endOfMonth,
-  endOfWeek,
-  formatMonth,
-  parseISODate,
-  startOfMonth,
-  startOfWeek,
-  toISODate,
-  weekdayLetter,
-} from '@/domain/dates';
+import { addDays, dayOfMonth, eachDay, endOfMonth, endOfWeek, formatLong, formatMonth, parseISODate, startOfMonth, startOfWeek, toISODate, weekdayLetter } from '@/domain/dates';
 import type { ISODate } from '@/domain/types';
 import { useColors } from '@/hooks/use-theme';
 import { radius, spacing } from '@/theme/tokens';
@@ -100,7 +88,7 @@ export function MonthCalendar({
                 {onDayPress && inMonth ? (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`${d}${s.label ? `, ${s.label}` : ''}`}
+                    accessibilityLabel={`${formatLong(d)}${s.label ? `, ${s.label}` : ''}`}
                     onPress={() => onDayPress(d)}
                     hitSlop={2}>
                     {content}

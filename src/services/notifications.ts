@@ -3,7 +3,8 @@ import { Platform } from 'react-native';
 
 import { useStore } from '@/data/store';
 import { addDays, parseISODate, todayISO, weekdayIndex } from '@/domain/dates';
-import { buildIndex, occurrence, versionOn } from '@/domain/schedule';
+import { flexWeek } from '@/domain/analytics';
+import { buildIndex, exceptionFor, isHabitActiveOn, occurrence, versionOn } from '@/domain/schedule';
 import type { Settings, UserData } from '@/domain/types';
 
 /**
@@ -102,7 +103,17 @@ export function planReminders(data: UserData, now = new Date()): Planned[] {
       const v = versionOn(habit, date);
       if (!v.reminderTime) continue;
       const o = occurrence(habit, date, idx, today);
-      const flexibleOpen = v.schedule.type === 'flexWeekly' && o.status === 'none';
+      // A flexible weekly habit has no fixed days: remind while it's live (not paused, its
+      // commitment still running), not a rest day, and this week's sessions aren't done yet.
+      const flexibleOpen =
+        v.schedule.type === 'flexWeekly' &&
+        o.status === 'none' &&
+        isHabitActiveOn(habit, date, idx) &&
+        !exceptionFor(habit, date, idx) &&
+        (() => {
+          const w = flexWeek(habit, date, idx, today);
+          return w.done < w.target;
+        })();
       if (!o.planned && !flexibleOpen) continue; // not scheduled, rest day, paused…
       if (o.log) continue; // already logged
       const minutes = applyQuietHours(toMinutes(v.reminderTime), settings);

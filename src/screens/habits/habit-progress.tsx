@@ -330,7 +330,7 @@ export function HabitProgress({ habit }: { habit: Habit }) {
         ))
       )}
 
-      <Button title="Back to habit" variant="secondary" icon="arrow-back" onPress={() => router.back()} />
+      <Button title="Back to habit" variant="secondary" icon="arrow-back" onPress={() => router.dismissTo(`/habit/${habit.id}`)} />
     </Screen>
   );
 }
