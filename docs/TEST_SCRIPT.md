@@ -77,3 +77,9 @@ Run on one iOS and one Android phone, in light and dark mode. Tick each step.
 - [ ] **Timer over midnight.** Start a timer just before midnight → after midnight Today stays on the earlier day with the timer visible. Stop it → the minutes are logged to the day it started.
 - [ ] **Back to habit.** Progress tab → open a habit's progress → **Back to habit** opens the habit details, not the Progress tab.
 - [ ] **VoiceOver.** The Today week strip and the month calendar read dates such as "Tuesday, November 24", not "2026-11-24". The 7-day status circles and the rhythm-chart bars can each be focused.
+
+## 11. Installed build over the cable (PR #3)
+- [ ] With the iPhone connected and unlocked, `npm run release:ios` → LifeOS opens on the phone with its own icon (if asked, Trust the developer in Settings → General → VPN & Device Management).
+- [ ] Fully close LifeOS and reopen it → it launches normally. After the next published update, reopening loads it (or shows **Update ready → Restart**).
+- [ ] Settings → **Load sample data** is available (dev tools are on in this build).
+- [ ] Settings → App lock ON → Face ID asks once → background for 5+ minutes → returns locked and Face ID unlocks it (Face ID works here, unlike Expo Go).

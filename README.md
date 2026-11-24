@@ -26,18 +26,28 @@ To try the app with realistic history, open **Profile & settings → Load sample
 
 ## iPhone build + over-the-air updates
 
-The project is linked to EAS (`@aprimat-team/lifeos`). Builds run in the cloud — no Mac needed.
+The project is linked to EAS (`@aprimat-team/lifeos`) for over-the-air updates.
 
-iPhones install the app straight from an expo.dev link (internal / ad hoc distribution, `preview`
-profile) — no TestFlight. Run these in your own terminal; they ask for your Apple ID:
+**Install on the iPhone (local build over the cable).** This builds in Release with Xcode, signed with
+the paid Apple team's development profile (team `7DMHB3BMGW`, `com.aprimat.lifeos`), then installs and
+launches the app on the connected iPhone:
 
 ```bash
-npm run device:add   # once per iPhone: open the link on the phone, install the profile
-npm run build:ios    # build in the cloud; open the build link on the iPhone → Install
+npm run release:ios   # scripts/ios-release.sh: prebuild → pod install → xcodebuild → devicectl install
 ```
 
-On iOS 16+, turn on **Settings → Privacy & Security → Developer Mode** the first time. A newly
-registered iPhone needs a new build before it can install.
+It needs Xcode signed in to the Apple ID (**Xcode → Settings → Accounts**), CocoaPods, and the iPhone
+connected by cable, unlocked, with **Developer Mode** on. The first install may need **Settings → General →
+VPN & Device Management → Trust**. Another iPhone: `LIFEOS_DEVICE=<UDID from xcrun xctrace list devices>`.
+The build listens to the `preview` channel (`updates.requestHeaders` in app.json) and waits up to 5 s at
+launch for a new update (`updates.fallbackToCacheTimeout`).
+
+A cloud alternative (EAS Build, internal distribution, installed from a link) also exists:
+`npm run device:add` once per iPhone, then `npm run build:ios`.
+
+Without a build, the `preview` updates also open in **Expo Go**: publish with
+`npm run update:expo-go -- "What changed"` and open
+`exp://u.expo.dev/b5526673-8e1e-4783-a8bb-af130496c540?runtime-version=exposdk:58.0.0&channel-name=preview`.
 
 **Every change after that** (JavaScript, styles, images):
 
@@ -50,10 +60,10 @@ in the background, then asks **Update ready → Restart**. "Later" applies it on
 
 `runtimeVersion` uses the `appVersion` policy: updates reach builds with the same `version` (currently
 1.0.0). **Adding a native module, changing native config in app.json or upgrading the SDK needs a new
-build** — bump `version` first so older builds never receive incompatible code.
+build** (`npm run release:ios`) — bump `version` first so older builds never receive incompatible code.
 
-The preview EAS environment sets `EXPO_PUBLIC_DEV_TOOLS=1` (sample data, design gallery); the
-production environment (App Store builds) does not.
+The preview EAS environment sets `EXPO_PUBLIC_DEV_TOOLS=1` (sample data, design gallery), and so does
+`npm run release:ios` for the embedded bundle; the production environment (App Store builds) does not.
 
 ## Code map
 
