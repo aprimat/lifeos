@@ -22,22 +22,27 @@ npm run ios         # development build on iOS (needs macOS + Xcode)
 For quick local testing, LifeOS also runs in **Expo Go** (SDK 58) via `npx expo start` (Face ID
 doesn't work in Expo Go on iOS). In the browser, biometrics and notifications are turned off.
 
-To try the app with realistic history, open **Profile & settings → Load sample data** (dev and TestFlight builds).
+To try the app with realistic history, open **Profile & settings → Load sample data** (dev and internal preview builds).
 
 ## TestFlight build + over-the-air updates
 
 The project is linked to EAS (`@aprimat-team/lifeos`). Builds run in the cloud — no Mac needed.
 
-**One-time: build and send to TestFlight** (asks for your Apple ID; run it in your own terminal):
+iPhones install the app straight from an expo.dev link (internal / ad hoc distribution, `preview`
+profile) — no TestFlight. Run these in your own terminal; they ask for your Apple ID:
 
 ```bash
-npm run build:testflight
+npm run device:add   # once per iPhone: open the link on the phone, install the profile
+npm run build:ios    # build in the cloud; open the build link on the iPhone → Install
 ```
+
+On iOS 16+, turn on **Settings → Privacy & Security → Developer Mode** the first time. A newly
+registered iPhone needs a new build before it can install.
 
 **Every change after that** (JavaScript, styles, images):
 
 ```bash
-npm run update:testflight -- "What changed"
+npm run update:ios -- "What changed"
 ```
 
 The installed app checks for updates on launch and when brought back to the foreground, downloads them
@@ -47,8 +52,8 @@ in the background, then asks **Update ready → Restart**. "Later" applies it on
 1.0.0). **Adding a native module, changing native config in app.json or upgrading the SDK needs a new
 build** — bump `version` first so older builds never receive incompatible code.
 
-The production EAS environment currently sets `EXPO_PUBLIC_DEV_TOOLS=1` (sample data, design gallery)
-for testing. Delete it with `npx eas-cli env:delete` before the App Store release.
+The preview EAS environment sets `EXPO_PUBLIC_DEV_TOOLS=1` (sample data, design gallery); the
+production environment (App Store builds) does not.
 
 ## Code map
 
