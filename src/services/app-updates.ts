@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Alert, AppState, Platform } from 'react-native';
 
 import { flushSave } from '@/data/store';
+import { formatShort, formatTime, todayISO } from '@/domain/dates';
 
 /**
  * Over-the-air updates in installed builds (TestFlight / store / internal).
@@ -61,4 +62,17 @@ export function useOverTheAirUpdates() {
     });
     return () => sub.remove();
   }, []);
+}
+
+/**
+ * Which JavaScript the app is running, for Settings → Version: "Update of Nov 24, 3:05 PM"
+ * after an over-the-air update, "Built-in version" before one. Null in development, Expo Go
+ * and on web (no EAS updates there).
+ */
+export function runningUpdateLabel(): string | null {
+  if (!updatesSupported()) return null;
+  if (Updates.isEmbeddedLaunch || !Updates.createdAt) return 'Built-in version';
+  const d = Updates.createdAt;
+  const hm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return `Update of ${formatShort(todayISO(d))}, ${formatTime(hm)}`;
 }

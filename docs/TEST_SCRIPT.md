@@ -83,3 +83,6 @@ Run on one iOS and one Android phone, in light and dark mode. Tick each step.
 - [ ] Fully close LifeOS and reopen it → it launches normally. After the next published update, reopening loads it (or shows **Update ready → Restart**).
 - [ ] Settings → **Load sample data** is available (dev tools are on in this build).
 - [ ] Settings → App lock ON → Face ID asks once → background for 5+ minutes → returns locked and Face ID unlocks it (Face ID works here, unlike Expo Go).
+
+## 12. Which update is running (PR #4)
+- [ ] On the cable-installed app, fully close LifeOS and reopen it, then open Profile & settings → About → **Version** → under "1.0.0" it reads "Update of <date>, <time>" matching the latest update (Expo dashboard). Right after a fresh `npm run release:ios`, before any update, it reads "Built-in version".
