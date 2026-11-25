@@ -11,11 +11,14 @@ import {
   createCommitment,
   createHabit,
   discardDraftCommitment,
+  habitsOnlyForGoal,
+  letGoGoal,
   endCommitment,
   pauseCommitment,
   pauseHabit,
   renewCommitment,
   resumeCommitment,
+  restoreGoal,
   resumeHabit,
   setLog,
   startCommitment,
@@ -212,5 +215,32 @@ describe('v1.4: a goal and the signs that it is achieved', () => {
     expect(state().milestones.find((m) => m.id === b)).toMatchObject({ title: 'Eat healthy most days', achievedAt: null });
     markGoalAchieved(g);
     expect(state().goals.find((x) => x.id === g)!.status).toBe('achieved');
+  });
+});
+
+describe('v1.4: letting a goal go', () => {
+  const goal = (title: string) => createGoal({ title, focusArea: null, myWhy: null, desiredOutcome: null });
+  const linked = (goalIds: string[]) =>
+    createHabit({ kind: 'build', title: 'Walk', icon: 'directions-walk', goalIds, startDate: addDays(today, -7), version });
+
+  test('keeps habits by default', () => {
+    const g = goal('Run a marathon');
+    const h = linked([g]);
+    letGoGoal(g);
+    expect(state().goals.find((x) => x.id === g)!.status).toBe('archived');
+    expect(habit(h).status).toBe('active');
+  });
+
+  test('can archive the habits only this goal relies on; shared ones keep going', () => {
+    const g = goal('Find a better job');
+    const other = goal('Be healthy');
+    const own = linked([g]);
+    const shared = linked([g, other]);
+    expect(habitsOnlyForGoal(state(), g).map((h) => h.id)).toEqual([own]);
+    letGoGoal(g, true);
+    expect(habit(own)).toMatchObject({ status: 'archived', archivedAt: today });
+    expect(habit(shared).status).toBe('active');
+    restoreGoal(g);
+    expect(state().goals.find((x) => x.id === g)!.status).toBe('active');
   });
 });

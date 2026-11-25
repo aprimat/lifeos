@@ -71,7 +71,7 @@ export function GoalWizard() {
     setSignDraft('');
   };
 
-  const back = () => (step > 1 ? setStep(step - 1) : goBack('/habits'));
+  const back = () => (step > 1 ? setStep(step - 1) : goBack('/goals'));
 
   const footer =
     step === 1 ? (

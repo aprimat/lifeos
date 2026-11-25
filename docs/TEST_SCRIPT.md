@@ -160,3 +160,14 @@ Run on one iOS and one Android phone, in light and dark mode. Tick each step.
 - [ ] **Add, rename, delete.** Goal page → **Add a sign** → type → Save → it appears. Tap **⋯** next to a sign → change the text → Save → renamed. **⋯** → **Delete sign** → gone.
 - [ ] **Habits tab.** A goal with signs shows a "1 of 3 signs" pill next to its name (green when all are ticked); a goal without signs shows no pill.
 - [ ] **Template signs.** Pick from templates → any template with "Is this for a bigger goal?" ticked → Add → open the goal → it has 3 suggested signs, all unticked. With the box unticked, no goal and no signs are created.
+
+## 21. Goals tab, "+" button and "Let it go" (PR #6)
+- [ ] **Bottom bar.** It reads Today · Habits · **+** · Goals · Progress. The + is a round button with no label.
+- [ ] **+ sheet.** Tap **+** → a sheet "Add" with **New habit** and **New goal**. **New habit** → the habit form opens; back → you're where you were. **+** → **New goal** → the goal form opens.
+- [ ] **Templates from the habit form.** **+** → **New habit** → under Build/Reduce tap **Or pick from templates** → the template list opens.
+- [ ] **Goals tab.** Tap **Goals** → "Your goals", **Add a goal**, and one card per active goal with "N habits · X of Y signs · Z% last 4 weeks". Tap a card → its goal page.
+- [ ] **Empty Goals tab.** On an account with no goals → "Got something bigger in mind?" with **Add a goal**.
+- [ ] **Let it go, keep habits.** Goal page → **Let it go** → sheet "Let this goal go?" → leave "Also archive…" unticked → **Let it go** → banner "You let this goal go"; its habits still show on Today. Goals tab → **Let go (1)** → the goal is listed there.
+- [ ] **Let it go, archive habits.** Make a goal with one habit only for it and one habit shared with another goal → **Let it go** → tick "Also archive its habit" (only the unshared habit is named) → **Let it go** → that habit is gone from Today and listed under Habits tab → **Archived habits**; the shared habit keeps going.
+- [ ] **Bring it back.** Open a let-go goal → **Bring it back** → it's Active again and back in the Goals list.
+- [ ] **Habits tab.** No "Add a goal" row and no goals list at the bottom any more; archived habits are under **Archived habits (N)**.

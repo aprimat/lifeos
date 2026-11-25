@@ -409,6 +409,16 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
               }
             />
           ) : null}
+          {!editing && !linkedCommitmentId && !onboarding ? (
+            <Button
+              title="Or pick from templates"
+              variant="ghost"
+              size="sm"
+              icon="auto-awesome"
+              onPress={() => router.push(goalId ? `/templates?goalId=${goalId}` : '/templates')}
+              style={{ alignSelf: 'flex-start' }}
+            />
+          ) : null}
 
           {/* Linked commitment / goal */}
           {commitment ? (
