@@ -7,10 +7,12 @@ import { Card, IconTile, Row } from '@/components/card';
 import { CheckCircle } from '@/components/controls';
 import { Icon } from '@/components/icon';
 import { Text } from '@/components/text';
-import { setLog } from '@/data/actions';
+import { clearLog, setLog } from '@/data/actions';
 import { useStore } from '@/data/store';
 import type { Occurrence } from '@/domain/schedule';
 import type { ISODate } from '@/domain/types';
+import { untickNeedsConfirm } from '@/domain/untick';
+import { ConfirmSheet } from '@/screens/habits/common';
 import { useColors } from '@/hooks/use-theme';
 import { elapsedMs, formatClock, useTimer } from '@/services/timer';
 import { radius, spacing } from '@/theme/tokens';
@@ -37,16 +39,20 @@ export function HabitRow({ occ, date, today, editable, inset, note, onOpen }: Ha
   const showReflect =
     editable && !reflected && REFLECT_STATUSES.includes(status) && (status !== 'missed' && status !== 'notLogged' ? true : date < today);
 
+  const [confirmUntick, setConfirmUntick] = useState(false);
+  // The circle is a plain switch: tap to tick, tap again to untick. Details live behind ⋯.
   const onCheck = () => {
     if (!editable) return;
     if (!log) {
       const b = occ.version.build;
       setLog(habit.id, date, { status: 'full', value: b && b.trackingType !== 'check' ? b.target : null });
-    } else onOpen();
+    } else if (untickNeedsConfirm(log, occ.version)) setConfirmUntick(true);
+    else clearLog(habit.id, date);
   };
 
+  // Future days are view-only: dim them so a tap that does nothing doesn't look broken.
   const body = (
-    <View style={{ gap: spacing.sm }}>
+    <View style={{ gap: spacing.sm, opacity: editable ? 1 : 0.55 }}>
       <Row gap={spacing.md}>
         {isReduce ? (
           <IconTile tone={status === 'over' ? 'amber' : status === 'within' ? 'sage' : 'neutral'} size={36}>
@@ -57,7 +63,6 @@ export function HabitRow({ occ, date, today, editable, inset, note, onOpen }: Ha
             state={checkState(status)}
             label={`${habit.title}${done ? ', done' : ''}`}
             onPress={editable ? onCheck : undefined}
-            onLongPress={editable ? () => onOpen() : undefined}
           />
         )}
         <Pressable
@@ -101,12 +106,30 @@ export function HabitRow({ occ, date, today, editable, inset, note, onOpen }: Ha
     </View>
   );
 
+  const confirm = (
+    <ConfirmSheet
+      visible={confirmUntick}
+      onClose={() => setConfirmUntick(false)}
+      title="Remove this log?"
+      body={`${log?.note?.trim() ? 'Your note' : 'The amount you entered'} for ${habit.title} on this day will be removed.`}
+      confirmLabel="Remove"
+      onConfirm={() => {
+        clearLog(habit.id, date);
+        setConfirmUntick(false);
+      }}
+    />
+  );
+
   return inset ? (
     <Card inset padding={spacing.md - 4}>
       {body}
+      {confirm}
     </Card>
   ) : (
-    <Card>{body}</Card>
+    <Card padding={spacing.md}>
+      {body}
+      {confirm}
+    </Card>
   );
 }
 

@@ -13,6 +13,7 @@ import { commitmentProgress, pct } from '@/domain/analytics';
 import { runningCommitment, type DataIndex } from '@/domain/schedule';
 import type { Goal, Habit, Milestone } from '@/domain/types';
 import { useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
+import { FEATURES } from '@/features';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
@@ -42,12 +43,9 @@ export function HabitsTab() {
   return (
     <Screen bare>
       <View style={{ marginHorizontal: -spacing.md, marginTop: -spacing.sm }}>
-        <TabHeader section="Habits" />
+        <TabHeader title="Habits" />
       </View>
-      <View style={{ gap: spacing.xs }}>
-        <Text variant="headlineLg" accessibilityRole="header">
-          Your habits
-        </Text>
+      <View style={{ gap: spacing.xs, marginTop: -spacing.sm }}>
         <Text variant="bodyMd" tone="secondary">
           What you repeat. Goals are optional.
         </Text>
@@ -68,7 +66,7 @@ export function HabitsTab() {
         <>
           <Row gap={spacing.sm}>
             <Button title="New habit" icon="add" onPress={() => router.push('/habit/new')} style={{ flex: 1 }} />
-            {running ? null : (
+            {running || !FEATURES.commitments ? null : (
               <Button
                 title="Make a commitment"
                 variant="secondary"
@@ -78,7 +76,7 @@ export function HabitsTab() {
               />
             )}
           </Row>
-          {running ? <RunningCommitmentCard id={running.id} /> : null}
+          {running && FEATURES.commitments ? <RunningCommitmentCard id={running.id} /> : null}
 
           {shownGoals.map((g) => (
             <GoalGroup

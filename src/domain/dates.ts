@@ -94,6 +94,11 @@ export function formatShort(date: ISODate): string {
   return `${MONTH_SHORT[d.getMonth()]} ${d.getDate()}`;
 }
 
+/** "Thu, Oct 24" */
+export function formatShortDay(date: ISODate): string {
+  return `${WEEKDAY_SHORT[weekdayIndex(date)]}, ${formatShort(date)}`;
+}
+
 /** "Thursday, October 24" */
 export function formatLong(date: ISODate): string {
   const d = parseISODate(date);

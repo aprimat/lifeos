@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { IconButton } from '@/components/button';
+import { DayRing, type DayMark } from '@/components/progress';
 import { Text } from '@/components/text';
 import { addDays, dayOfMonth, eachDay, endOfMonth, endOfWeek, formatLong, formatMonth, parseISODate, startOfMonth, startOfWeek, toISODate, weekdayLetter } from '@/domain/dates';
 import type { ISODate } from '@/domain/types';
@@ -14,6 +15,8 @@ export interface DayCellStyle {
   dashed?: boolean;
   dot?: string;
   label?: string;
+  /** Draw a day ring (how the day went) around the number instead of a dot. */
+  ring?: { done: number; planned: number; mark: DayMark; filled?: boolean };
 }
 
 export function shiftMonth(month: ISODate, delta: number): ISODate {
@@ -77,9 +80,17 @@ export function MonthCalendar({
                     opacity: inMonth ? 1 : 0.25,
                   },
                 ]}>
-                <Text variant="labelLg" tabular color={s.fg ?? (inMonth ? c.text : c.textTertiary)}>
-                  {dayOfMonth(d)}
-                </Text>
+                {s.ring ? (
+                  <DayRing done={s.ring.done} planned={s.ring.planned} mark={s.ring.mark} filled={s.ring.filled} size={34}>
+                    <Text variant="labelLg" tabular color={s.fg ?? (inMonth ? c.text : c.textTertiary)}>
+                      {dayOfMonth(d)}
+                    </Text>
+                  </DayRing>
+                ) : (
+                  <Text variant="labelLg" tabular color={s.fg ?? (inMonth ? c.text : c.textTertiary)}>
+                    {dayOfMonth(d)}
+                  </Text>
+                )}
                 {s.dot ? <View style={[styles.dot, { backgroundColor: s.dot }]} /> : null}
               </View>
             );

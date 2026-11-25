@@ -38,6 +38,7 @@ import {
 import { missSummary } from '@/domain/misses';
 import { occurrence } from '@/domain/schedule';
 import { useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
+import { FEATURES } from '@/features';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
@@ -133,7 +134,7 @@ export function ProgressScreen() {
     return (
       <Screen bare>
         <View style={{ marginHorizontal: -spacing.md, marginTop: -spacing.sm }}>
-          <TabHeader section="Progress" />
+          <TabHeader title="Progress" />
         </View>
         <EmptyState
           icon="insights"
@@ -151,7 +152,7 @@ export function ProgressScreen() {
   return (
     <Screen bare testID="progress-screen">
       <View style={{ marginHorizontal: -spacing.md, marginTop: -spacing.sm }}>
-        <TabHeader section="Progress" />
+        <TabHeader title="Progress" />
       </View>
 
       <SegmentedControl
@@ -299,7 +300,7 @@ export function ProgressScreen() {
         </>
       ) : null}
 
-      {commitments.length ? (
+      {FEATURES.commitments && commitments.length ? (
         <>
           <SectionHeader title="Commitments" icon="flag" />
           {commitments.map(({ commitment, progress }) => (

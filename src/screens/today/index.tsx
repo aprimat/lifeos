@@ -7,15 +7,15 @@ import { Card, Row, Stack } from '@/components/card';
 import { Chip } from '@/components/controls';
 import { Icon } from '@/components/icon';
 import { Banner, EmptyState, Pill, SectionHeader } from '@/components/layout';
-import { ProgressBar, WeekStrip } from '@/components/progress';
+import { dayMark, dayMarkLabel, ProgressBar } from '@/components/progress';
 import { Screen, TabHeader } from '@/components/screen';
 import { Text } from '@/components/text';
-import { DISPOSITIONS, greeting, TIME_OF_DAY } from '@/copy';
+import { DISPOSITIONS, TIME_OF_DAY } from '@/copy';
 import { dismissPrompt } from '@/data/actions';
-import { useStore } from '@/data/store';
-import { commitmentProgress, dailyCompletion, dailySeries, dayPlan, flexibleForDay, pct } from '@/domain/analytics';
-import { addDays, diffDays, endOfWeek, formatLong, formatShort, startOfWeek, weekdayIndex } from '@/domain/dates';
-import { commitmentDay, commitmentEndDate, occurrence, scheduleMatches, type Occurrence } from '@/domain/schedule';
+import { dailyCompletion, dailySeries, dayPlan, flexibleForDay } from '@/domain/analytics';
+import { addDays, endOfMonth, formatShort, formatShortDay, startOfMonth, startOfWeek, weekdayIndex } from '@/domain/dates';
+import { commitmentEndDate, occurrence, scheduleMatches, type Occurrence } from '@/domain/schedule';
+import { FEATURES } from '@/features';
 import { useTimer } from '@/services/timer';
 import { useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
@@ -23,15 +23,20 @@ import { spacing } from '@/theme/tokens';
 
 import { HabitRow } from './habit-row';
 import { LogSheet, type LogTarget } from './log-sheet';
+import { useDoneLast } from './use-done-last';
+import { WeekPager } from './week-pager';
+import Animated, { LinearTransition } from 'react-native-reanimated';
+import { MonthCalendar } from '../habits/month-calendar';
+import { Sheet } from '@/components/sheet';
 
-const EDIT_WINDOW_DAYS = 7;
 
 export function TodayScreen() {
   const c = useColors();
   const today = useToday();
   const [selected, setSelected] = useState(today);
   const [sheet, setSheet] = useState<LogTarget | null>(null);
-  const user = useStore((s) => s.user);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(today);
   const data = useData();
   const habits = useLiveHabits();
   const idx = useIndex();
@@ -46,7 +51,10 @@ export function TodayScreen() {
   }
 
   const weekStart = startOfWeek(today);
-  const series = useMemo(() => dailySeries(habits, weekStart, endOfWeek(today), idx, today), [habits, idx, today, weekStart]);
+  const monthSeries = useMemo(
+    () => (calendarOpen ? dailySeries(habits, startOfMonth(calendarMonth), endOfMonth(calendarMonth), idx, today) : []),
+    [calendarOpen, habits, calendarMonth, idx, today],
+  );
   const plan = useMemo(() => dayPlan(habits, selected, idx, today), [habits, selected, idx, today]);
   const completion = useMemo(() => dailyCompletion(habits, selected, idx, today), [habits, selected, idx, today]);
   const flex = useMemo(() => flexibleForDay(habits, selected, idx, today), [habits, selected, idx, today]);
@@ -58,22 +66,17 @@ export function TodayScreen() {
     [habits, selected, idx, today],
   );
 
-  const age = diffDays(selected, today);
-  const editable = selected <= today && age <= EDIT_WINDOW_DAYS;
+  // Any past day can be logged: forgetting to log is normal and shouldn't be punished.
+  const editable = selected <= today;
   const isToday = selected === today;
 
-  // Planned items grouped by time of day. A running commitment is one line above them (plan v1.4 §3).
-  const timeGroups = useMemo(
-    () => TIME_OF_DAY.map((t) => ({ ...t, items: plan.filter((o) => o.version.timeOfDay === t.value) })).filter((g) => g.items.length),
+  // One list in time-of-day order; done habits move to the bottom after a short pause.
+  const byTime = useMemo(
+    () => TIME_OF_DAY.flatMap((t) => plan.filter((o) => o.version.timeOfDay === t.value)),
     [plan],
   );
-  const commitment = data.commitments.find((k) => {
-    if (k.status !== 'active' && k.status !== 'paused') return false;
-    const end = commitmentEndDate(k);
-    return k.startDate <= selected && (!end || selected <= end);
-  });
-  const commitmentStats = commitment ? commitmentProgress(commitment, habits, idx, today) : null;
-
+  const orderedPlan = useDoneLast(byTime, (o) => o.habit.id, (o) => o.done, selected);
+  const orderedFlex = useDoneLast(flex, (f) => f.habit.id, (f) => !!f.log && (f.log.status === 'full' || f.log.status === 'minimum' || f.log.status === 'partial'), selected);
   // Yesterday's unlogged items (optional, dismissible).
   const yesterday = addDays(today, -1);
   const yesterdayMissed = useMemo(
@@ -84,6 +87,7 @@ export function TodayScreen() {
 
   // Commitments that reached their end date and still await a look back (plan 7.3).
   const finished = data.commitments.filter((k) => {
+    if (!FEATURES.commitments) return false;
     const end = commitmentEndDate(k);
     return k.status === 'active' && !!end && end < today;
   });
@@ -101,67 +105,63 @@ export function TodayScreen() {
     setSheet({ habit: o.habit, version: o.version, date: selected, log: o.log, initialValue });
   };
 
-  const allDone = completion.total > 0 && completion.done === completion.total;
-
   return (
-    <Screen bare testID="today-screen">
-      <View style={{ marginHorizontal: -spacing.md, marginTop: -spacing.sm }}>
-        <TabHeader section="Today" />
-      </View>
-
-      <View style={{ gap: 2 }}>
-        <Text variant="labelMd" tone="tertiary" uppercase>
-          {formatLong(today)}
+    <Screen
+      bare
+      testID="today-screen"
+      header={
+        <>
+          <TabHeader
+            title={`${formatShortDay(selected)}${selected.slice(0, 4) !== today.slice(0, 4) ? `, ${selected.slice(0, 4)}` : ''}`}
+            size="md"
+            right={
+              <IconButton
+                icon="calendar-month"
+                accessibilityLabel="Open calendar"
+                onPress={() => {
+                  setCalendarMonth(selected);
+                  setCalendarOpen(true);
+                }}
+              />
+            }
+          />
+          {habits.length ? (
+            <View style={{ paddingHorizontal: spacing.md }}>
+              <WeekPager habits={habits} idx={idx} today={today} selected={selected} onSelect={setSelected} />
+            </View>
+          ) : null}
+        </>
+      }>
+      <Sheet visible={calendarOpen} onClose={() => setCalendarOpen(false)} title="Calendar">
+        <MonthCalendar
+          month={calendarMonth}
+          onMonthChange={setCalendarMonth}
+          today={today}
+          cell={(d) => {
+            const day = monthSeries.find((x) => x.date === d);
+            if (!day) return {};
+            const mark = dayMark(day, today);
+            return {
+              ring: { done: day.done, planned: day.planned, mark, filled: d === selected },
+              fg: d === selected ? c.onPrimary : d === today ? c.primaryText : undefined,
+              border: 'transparent',
+              label: dayMarkLabel(day, mark),
+            };
+          }}
+          onDayPress={(d) => {
+            setSelected(d);
+            setCalendarOpen(false);
+          }}
+        />
+        <Text variant="bodySm" tone="tertiary" center>
+          The ring fills with how much was done that day. Green with ✓: all of it.
         </Text>
-        <Text variant="headlineLg" accessibilityRole="header">
-          {greeting(user?.name ?? '')}
-        </Text>
-      </View>
+      </Sheet>
 
       {habits.length === 0 ? (
         <EmptyStart />
       ) : (
         <>
-          <Card padding={spacing.sm}>
-            <WeekStrip days={series} selected={selected} today={today} onSelect={setSelected} />
-          </Card>
-
-          {commitment && commitmentStats ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Your commitment: day ${Math.max(1, commitmentDay(commitment, selected))}${commitment.durationDays ? ` of ${commitment.durationDays}` : ''}, ${pct(commitmentStats.consistency)} kept. Open`}
-              onPress={() => router.push(`/commitment/${commitment.id}`)}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, minHeight: 44, borderRadius: 12, backgroundColor: c.primarySoft, opacity: pressed ? 0.8 : 1 })}>
-              <Icon name="track-changes" size={18} color={c.primaryText} />
-              <Text variant="labelLg" tone="accent" tabular style={{ flex: 1 }}>
-                {commitment.status === 'paused' ? 'Commitment paused · ' : ''}Day {Math.max(1, commitmentDay(commitment, selected))}
-                {commitment.durationDays ? ` of ${commitment.durationDays}` : ''}
-                {commitmentStats.consistency !== null ? ` · ${pct(commitmentStats.consistency)} kept` : ''}
-              </Text>
-              <Icon name="chevron-right" size={18} color={c.primaryText} />
-            </Pressable>
-          ) : null}
-
-          {!isToday ? (
-            <Banner
-              icon={selected > today ? 'event' : 'history'}
-              title={formatLong(selected)}
-              body={
-                selected > today
-                  ? 'This is what is planned. You can log it on the day.'
-                  : editable
-                    ? 'You can still log or correct this day.'
-                    : 'This day is read-only now. History stays as it was.'
-              }
-              action={
-                <Pressable accessibilityRole="button" onPress={() => setSelected(today)} style={{ paddingVertical: 6 }}>
-                  <Text variant="labelLg" tone="accent">
-                    Back to today
-                  </Text>
-                </Pressable>
-              }
-            />
-          ) : null}
 
           {showReview ? (
             <Banner
@@ -187,33 +187,20 @@ export function TodayScreen() {
           ) : null}
 
           <Card>
-            <Row justify="space-between">
-              <Text variant="labelSm" tone="secondary" uppercase>
-                Daily plan
-              </Text>
-              {completion.ratio !== null ? (
-                <Text variant="labelLg" tone="accent" tabular>
-                  {Math.round(completion.ratio * 100)}%
-                </Text>
-              ) : null}
-            </Row>
             {completion.total > 0 ? (
-              <>
-                <Text variant="headlineMd" tabular style={{ marginTop: spacing.xs }}>
-                  {completion.done} of {completion.total} completed
-                </Text>
-                <View style={{ marginVertical: spacing.sm }}>
-                  <ProgressBar value={completion.ratio ?? 0} />
-                </View>
-                <Row gap={6}>
-                  <Icon name="spa" size={16} color={c.sage} />
-                  <Text variant="bodySm" tone="secondary">
-                    {allDone ? "Today's plan is done. Nicely paced." : 'Paced for steady consistency, not pressure.'}
+              <Stack gap={spacing.sm}>
+                <Row justify="space-between">
+                  <Text variant="headlineSm" tabular>
+                    {completion.done} of {completion.total} completed
+                  </Text>
+                  <Text variant="labelLg" tone="accent" tabular>
+                    {Math.round((completion.ratio ?? 0) * 100)}%
                   </Text>
                 </Row>
-              </>
+                <ProgressBar value={completion.ratio ?? 0} />
+              </Stack>
             ) : (
-              <Text variant="bodyMd" tone="secondary" style={{ marginTop: spacing.xs }}>
+              <Text variant="bodyMd" tone="secondary">
                 {restItems.length ? 'A planned rest day. Rest is part of the rhythm.' : 'Nothing scheduled for this day. Enjoy the space.'}
               </Text>
             )}
@@ -269,30 +256,26 @@ export function TodayScreen() {
           ) : null}
 
 
-          {timeGroups.length ? (
+          {orderedPlan.length ? (
             <View style={{ gap: spacing.sm }}>
-              <SectionHeader title="Daily habits" right={`${timeGroups.flatMap((g) => g.items).filter((o) => o.done).length} of ${timeGroups.flatMap((g) => g.items).length} done`} />
-              {timeGroups.map((g) => (
-                <View key={g.value} style={{ gap: spacing.sm }}>
-                  {timeGroups.length > 1 || g.value !== 'anytime' ? (
-                    <SectionHeader title={g.label} icon={g.icon} right={`${g.items.filter((o) => o.done).length} of ${g.items.length}`} />
-                  ) : null}
-                  {g.items.map((o) => (
-                    <HabitRow key={o.habit.id} occ={o} date={selected} today={today} editable={editable} onOpen={(v) => open(o, v)} />
-                  ))}
-                </View>
+              {orderedPlan.map((o) => (
+                <Animated.View key={o.habit.id} layout={LinearTransition.duration(250)}>
+                  <HabitRow occ={o} date={selected} today={today} editable={editable} onOpen={(v) => open(o, v)} />
+                </Animated.View>
               ))}
             </View>
           ) : null}
 
-          {flex.length ? (
+          {orderedFlex.length ? (
             <View style={{ gap: spacing.sm }}>
               <SectionHeader title="This week" icon="date-range" right="Any day works" />
-              {flex.map(({ habit, week, log }) => {
+              {orderedFlex.map(({ habit, week, log }) => {
                 const o = occurrence(habit, selected, idx, today);
                 const note = `${week.done} of ${week.target}${week.extra ? ` · +${week.extra}` : ''}`;
                 return (
-                  <HabitRow key={habit.id} occ={{ ...o, log }} date={selected} today={today} editable={editable} note={note} onOpen={(v) => open({ ...o, log }, v)} />
+                  <Animated.View key={habit.id} layout={LinearTransition.duration(250)}>
+                    <HabitRow occ={{ ...o, log }} date={selected} today={today} editable={editable} note={note} onOpen={(v) => open({ ...o, log }, v)} />
+                  </Animated.View>
                 );
               })}
             </View>
@@ -360,9 +343,6 @@ export function TodayScreen() {
             )
           ) : null}
 
-          <Row gap={spacing.sm} justify="center" wrap style={{ marginTop: spacing.sm }}>
-            <Button size="sm" variant="secondary" icon="add" title="Add a habit" onPress={() => router.push('/habit/new')} />
-          </Row>
         </>
       )}
 
@@ -380,7 +360,7 @@ function EmptyStart() {
         body="Nothing is planned yet. Start with one small step — you can always add more later."
       />
       <Button title="Add a habit" icon="add" onPress={() => router.push('/habit/new')} />
-      <Button variant="secondary" title="Start a commitment" icon="flag" onPress={() => router.push('/commitment/new')} />
+      {FEATURES.commitments ? <Button variant="secondary" title="Start a commitment" icon="flag" onPress={() => router.push('/commitment/new')} /> : null}
       <Button variant="secondary" title="Create a goal" icon="explore" onPress={() => router.push('/goal/new')} />
     </View>
   );

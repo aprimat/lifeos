@@ -140,7 +140,7 @@ export default function TemplateRoute() {
         </Card>
       )}
 
-      <Banner title="Starts today" body="The habits appear on Today straight away. Edit any of them later, or make a commitment from the Habits tab." />
+      <Banner title="Starts today" body="The habits appear on Today straight away. Edit any of them later from the Habits tab." />
     </Screen>
   );
 }
