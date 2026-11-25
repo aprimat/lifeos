@@ -10,7 +10,8 @@ describe('review fixes (domain)', () => {
   it("counts a commitment's final, partial flexible week", () => {
     // 30 days from Mon Nov 2 ends Tue Dec 1.
     const c = makeCommitment({ startDate: '2026-11-02', durationDays: 30 });
-    const h = makeHabit({ commitmentId: c.id }, { schedule: { type: 'flexWeekly', timesPerWeek: 2 } });
+    const h = makeHabit({}, { schedule: { type: 'flexWeekly', timesPerWeek: 2 } });
+    c.habitIds = [h.id];
     const logs = [makeLog(h.id, '2026-11-30', 'full'), makeLog(h.id, '2026-12-01', 'full')];
     const p = commitmentProgress(c, [h], idx([h], logs, [c]), '2026-12-03');
     expect(p.breakdown.done).toBe(2);

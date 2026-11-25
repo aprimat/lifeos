@@ -21,8 +21,8 @@ export default function TabsLayout() {
         options={{ title: 'Today', tabBarIcon: ({ color }) => <Icon name="wb-sunny" color={color as string} size={24} /> }}
       />
       <Tabs.Screen
-        name="goals"
-        options={{ title: 'Goals', tabBarIcon: ({ color }) => <Icon name="flag" color={color as string} size={24} /> }}
+        name="habits"
+        options={{ title: 'Habits', tabBarIcon: ({ color }) => <Icon name="repeat" color={color as string} size={24} /> }}
       />
       <Tabs.Screen
         name="progress"

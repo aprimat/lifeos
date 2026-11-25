@@ -11,13 +11,14 @@ describe('performance with 365 days of logs', () => {
   const today = '2026-11-23';
   const c = makeCommitment({ startDate: start, durationDays: null });
   const habits = [
-    makeHabit({ startDate: start, commitmentId: c.id }),
-    makeHabit({ startDate: start, commitmentId: c.id }, { effectiveFrom: start, schedule: { type: 'weekdays', weekdays: [0, 2, 4] } }),
+    makeHabit({ startDate: start }),
+    makeHabit({ startDate: start }, { effectiveFrom: start, schedule: { type: 'weekdays', weekdays: [0, 2, 4] } }),
     makeHabit({ startDate: start }, { effectiveFrom: start, schedule: { type: 'flexWeekly', timesPerWeek: 3 } }),
     makeHabit({ startDate: start }, { effectiveFrom: start }),
     makeHabit({ startDate: start }, { effectiveFrom: start }),
     makeReduceHabit({ startDate: start }),
   ];
+  c.habitIds = [habits[0].id, habits[1].id];
   for (const h of habits) h.versions[0].effectiveFrom = start;
   const logs: ActivityLog[] = [];
   for (let d = start; d < today; d = addDays(d, 1)) {

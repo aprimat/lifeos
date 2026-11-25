@@ -90,6 +90,7 @@ export default function RootLayout() {
             <Stack.Screen name="habit" />
             <Stack.Screen name="settings" />
             <Stack.Screen name="weekly-review" />
+            <Stack.Screen name="report" />
             <Stack.Screen name="dev" />
             <Stack.Screen name="check-in" options={{ presentation: 'modal' }} />
             <Stack.Screen name="reflection" options={{ presentation: 'modal' }} />

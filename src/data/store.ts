@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
-import { emptyUserData, type FocusArea, type User, type UserData } from '@/domain/types';
+import { todayISO } from '@/domain/dates';
+import { migrateData } from '@/domain/migrate';
+import { emptyUserData, SCHEMA_VERSION, type FocusArea, type User, type UserData } from '@/domain/types';
 import {
   hashPassword,
   newId,
@@ -60,10 +62,20 @@ export async function flushSave(): Promise<void> {
   }
 }
 
-function migrate(data: UserData | null): UserData {
-  const base = emptyUserData();
-  if (!data) return base;
-  return { ...base, ...data, settings: { ...base.settings, ...data.settings } };
+/** Load a user's data, bringing it up to the current schema (and saving that once). */
+async function loadData(userId: string): Promise<UserData> {
+  const raw = await repository.loadUserData(userId);
+  const data = migrateData(raw, todayISO());
+  const from = raw ? ((raw as { schemaVersion?: number }).schemaVersion ?? 1) : SCHEMA_VERSION;
+  if (from < SCHEMA_VERSION) {
+    try {
+      await repository.backupUserData(userId, from, raw);
+      await repository.saveUserData(userId, data);
+    } catch (e) {
+      console.warn('LifeOS: could not save migrated data', e);
+    }
+  }
+  return data;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -81,7 +93,7 @@ export const useStore = create<AppState>((set, get) => ({
         await setSessionUserId(null);
         return set({ status: 'signedOut' });
       }
-      const data = migrate(await repository.loadUserData(user.id));
+      const data = await loadData(user.id);
       set({ status: 'ready', user, data });
     } catch (e) {
       console.warn('LifeOS: init failed', e);
@@ -125,7 +137,7 @@ export const useStore = create<AppState>((set, get) => ({
     if (!user || (await hashPassword(password, user.salt)) !== user.passwordHash) {
       return 'Email or password is incorrect.';
     }
-    const data = migrate(await repository.loadUserData(user.id));
+    const data = await loadData(user.id);
     await setSessionUserId(user.id);
     set({ status: 'ready', user, data });
     return null;

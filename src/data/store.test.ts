@@ -42,7 +42,7 @@ describe('accounts and persistence', () => {
     expect(await s.signUp({ name: 'Elena', email: 'Elena@Example.com', password: 'password123' })).toBeNull();
     expect(useStore.getState().status).toBe('ready');
 
-    const id = createHabit({ kind: 'build', title: 'Speak', icon: 'record-voice-over', goalId: null, commitmentId: null, startDate: todayISO(), version: habitVersion });
+    const id = createHabit({ kind: 'build', title: 'Speak', icon: 'record-voice-over', goalIds: [], startDate: todayISO(), version: habitVersion });
     setLog(id, todayISO(), { status: 'full' });
     await flush();
 

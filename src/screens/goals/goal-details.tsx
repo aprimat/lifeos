@@ -7,35 +7,38 @@ import { Card, Row, Stack } from '@/components/card';
 import { TextField } from '@/components/controls';
 import { Icon } from '@/components/icon';
 import { Banner, EmptyState, Pill, SectionHeader } from '@/components/layout';
-import { ProgressBar } from '@/components/progress';
+import { BreakdownBar } from '@/components/progress';
 import { Screen } from '@/components/screen';
 import { Sheet } from '@/components/sheet';
 import { Text } from '@/components/text';
 import { focusLabel } from '@/copy';
-import { addMilestone, archiveGoal, deleteMilestone, restoreGoal, setMilestoneAchieved, updateGoal } from '@/data/actions';
-import { commitmentProgress, pct, reduceTrend } from '@/domain/analytics';
-import { formatRange, formatShort, toISODate } from '@/domain/dates';
-import { commitmentEndDate } from '@/domain/schedule';
-import { useData, useGoal, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
+import { addGoalSign, archiveGoal, deleteMilestone, markGoalAchieved, renameMilestone, restoreGoal, setMilestoneAchieved, updateGoal } from '@/data/actions';
+import { consistency, habitsBreakdown, pct, reduceTrend } from '@/domain/analytics';
+import { addDays, formatShort, toISODate } from '@/domain/dates';
+import { useGoal, useGoalSigns, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 
 import { HabitRow, recentConsistency } from './shared';
 
+const WINDOW_DAYS = 28;
+
+/** A goal (plan v1.4): a result you want, the habits that support it, how they're going, and "achieved". */
 export function GoalDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const goal = useGoal(id);
-  const data = useData();
   const habits = useLiveHabits();
   const idx = useIndex();
   const today = useToday();
   const c = useColors();
   const [whyOpen, setWhyOpen] = useState(false);
   const [whyDraft, setWhyDraft] = useState('');
-  const [msOpen, setMsOpen] = useState(false);
-  const [msDraft, setMsDraft] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
+  const [achieveOpen, setAchieveOpen] = useState<false | 'button' | 'signs'>(false);
+  const signs = useGoalSigns(id);
+  const [signSheet, setSignSheet] = useState<null | { id: string | null }>(null);
+  const [signDraft, setSignDraft] = useState('');
 
   if (!goal) {
     return (
@@ -45,17 +48,30 @@ export function GoalDetails() {
     );
   }
 
-  const commitments = data.commitments.filter((k) => k.goalId === goal.id);
-  const active = commitments.find((k) => k.status === 'active' || k.status === 'paused');
-  const drafts = commitments.filter((k) => k.status === 'draft');
-  const past = commitments.filter((k) => k.status === 'completed' || k.status === 'archived');
-  const goalHabits = habits.filter(
-    (h) => h.goalId === goal.id && h.status !== 'archived' && (!h.commitmentId || h.commitmentId === active?.id),
-  );
+  const goalHabits = habits.filter((h) => h.goalIds.includes(goal.id) && h.status !== 'archived');
   const build = goalHabits.filter((h) => h.kind === 'build');
   const reduce = goalHabits.filter((h) => h.kind === 'reduce');
-  const milestones = data.milestones.filter((m) => m.ownerType === 'goal' && m.ownerId === goal.id);
-  const progress = active ? commitmentProgress(active, habits, idx, today) : null;
+  const recent = habitsBreakdown(goalHabits, addDays(today, -(WINDOW_DAYS - 1)), today, idx, today);
+  const achieved = goal.status === 'achieved' || goal.status === 'concluded';
+  const statusLabel = goal.status === 'active' ? 'Active' : goal.status === 'archived' ? 'Archived' : 'Achieved';
+  const signsDone = signs.filter((m) => m.achievedAt).length;
+
+  const toggleSign = (signId: string, done: boolean) => {
+    setMilestoneAchieved(signId, !done);
+    // Ticking the last open sign suggests marking the goal achieved; the user decides.
+    if (!done && goal.status === 'active' && signs.every((m) => m.id === signId || m.achievedAt)) setAchieveOpen('signs');
+  };
+  const openSign = (signId: string | null, title = '') => {
+    setSignDraft(title);
+    setSignSheet({ id: signId });
+  };
+  const saveSign = () => {
+    const title = signDraft.trim();
+    if (!title || !signSheet) return;
+    if (signSheet.id) renameMilestone(signSheet.id, title);
+    else addGoalSign(goal.id, title);
+    setSignSheet(null);
+  };
 
   return (
     <Screen
@@ -69,15 +85,94 @@ export function GoalDetails() {
       <Stack gap={spacing.xs}>
         <Row wrap>
           {goal.focusArea ? <Pill label={focusLabel(goal.focusArea)} tone="primary" /> : null}
-          <Pill label={goal.status === 'active' ? 'Active' : goal.status === 'archived' ? 'Archived' : 'Concluded'} tone={goal.status === 'active' ? 'sage' : 'neutral'} />
+          <Pill label={statusLabel} tone={goal.status === 'archived' ? 'neutral' : 'sage'} icon={achieved ? 'emoji-events' : undefined} />
         </Row>
         <Text variant="headlineLg" accessibilityRole="header">
           {goal.title}
         </Text>
+        {goal.desiredOutcome ? <Text variant="bodyMd" tone="secondary">{goal.desiredOutcome}</Text> : null}
         <Text variant="bodySm" tone="tertiary">
           Since {formatShort(toISODate(new Date(goal.createdAt)))}
+          {achieved && goal.achievedAt ? ` · achieved ${formatShort(goal.achievedAt)}` : ''}
         </Text>
       </Stack>
+
+      {achieved ? (
+        <Banner icon="emoji-events" title="You reached this goal" body="Its habits keep going for as long as you want them. Archive any you no longer need." />
+      ) : null}
+
+      {/* Signs it's achieved: the user ticks each one when it comes true */}
+      <Card>
+        <Stack gap={spacing.sm}>
+          <Row justify="space-between">
+            <Row>
+              <Icon name="checklist" size={18} color={c.primaryText} />
+              <Text variant="labelLg" tone="accent">
+                Signs it&apos;s achieved
+              </Text>
+            </Row>
+            {signs.length ? (
+              <Text variant="labelMd" tone="tertiary" tabular>
+                {signsDone} of {signs.length}
+              </Text>
+            ) : null}
+          </Row>
+          {signs.length ? null : (
+            <Text variant="bodyMd" tone="tertiary">
+              How will you know you got there? For example: lost 9 kg, can touch my toes, eat healthy most days.
+            </Text>
+          )}
+          {signs.map((m) => {
+            const done = !!m.achievedAt;
+            return (
+              <Row key={m.id} gap={spacing.sm}>
+                <Pressable
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: done }}
+                  accessibilityLabel={m.title}
+                  onPress={() => toggleSign(m.id, done)}
+                  style={({ pressed }) => ({ flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44, opacity: pressed ? 0.7 : 1 })}>
+                  <Icon name={done ? 'check-box' : 'check-box-outline-blank'} size={24} color={done ? c.primary : c.textTertiary} />
+                  <View style={{ flex: 1 }}>
+                    <Text variant="bodyMd">{m.title}</Text>
+                    {done && m.achievedAt ? (
+                      <Text variant="bodySm" tone="tertiary">
+                        Since {formatShort(m.achievedAt)}
+                      </Text>
+                    ) : null}
+                  </View>
+                </Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Edit sign ${m.title}`} hitSlop={8} onPress={() => openSign(m.id, m.title)} style={{ padding: spacing.sm }}>
+                  <Icon name="more-horiz" size={20} color={c.textTertiary} />
+                </Pressable>
+              </Row>
+            );
+          })}
+          <Button title="Add a sign" size="sm" variant="secondary" icon="add" onPress={() => openSign(null)} style={{ alignSelf: 'flex-start' }} />
+        </Stack>
+      </Card>
+
+      {/* How it's going: the habits that support this goal, last 4 weeks */}
+      <Card>
+        <Stack gap={spacing.sm}>
+          <Text variant="labelSm" tone="tertiary" uppercase>
+            Last 4 weeks
+          </Text>
+          {recent.eligible > 0 ? (
+            <>
+              <Text variant="headlineLg" tabular>
+                {pct(consistency(recent))}
+                <Text variant="bodyMd" tone="secondary">{`  ${recent.done} of ${recent.eligible} planned sessions done`}</Text>
+              </Text>
+              <BreakdownBar b={recent} />
+            </>
+          ) : (
+            <Text variant="bodyMd" tone="secondary">
+              {goalHabits.length ? 'Nothing planned yet. Progress appears once your habits have had a few days.' : 'Add a habit to start making progress toward this goal.'}
+            </Text>
+          )}
+        </Stack>
+      </Card>
 
       {/* My Why */}
       <Card>
@@ -112,179 +207,92 @@ export function GoalDetails() {
         </Stack>
       </Card>
 
-      {/* Milestones */}
-      <Card>
+      <SectionHeader title="Habits for this goal" right={goalHabits.length ? `${goalHabits.length}` : undefined} />
+      {build.length ? (
         <Stack>
-          <Row justify="space-between">
-            <Row>
-              <Icon name="outlined-flag" size={18} color={c.sage} />
-              <Text variant="labelLg">Milestones</Text>
-            </Row>
-            <Button title="Add" size="sm" variant="ghost" icon="add" onPress={() => { setMsDraft(''); setMsOpen(true); }} />
-          </Row>
-          {goal.desiredOutcome && !milestones.some((m) => m.title === goal.desiredOutcome) ? (
-            <Text variant="bodyMd">{goal.desiredOutcome}</Text>
-          ) : null}
-          {milestones.length === 0 && !goal.desiredOutcome ? (
-            <Text variant="bodySm" tone="tertiary">
-              Optional checkpoints worth recognising along the way.
-            </Text>
-          ) : null}
-          {milestones.map((m) => (
-            <Row key={m.id}>
-              <Pressable
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: !!m.achievedAt }}
-                accessibilityLabel={m.title}
-                onPress={() => setMilestoneAchieved(m.id, !m.achievedAt)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1, minHeight: 44 }}>
-                <Icon name={m.achievedAt ? 'check-circle' : 'radio-button-unchecked'} size={22} color={m.achievedAt ? c.sage : c.idle} />
-                <View style={{ flex: 1 }}>
-                  <Text variant="bodyMd">{m.title}</Text>
-                  {m.achievedAt ? (
-                    <Text variant="labelMd" tone="sage">
-                      Reached {formatShort(m.achievedAt)}
-                    </Text>
-                  ) : null}
-                </View>
-              </Pressable>
-              <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${m.title}`} hitSlop={8} onPress={() => deleteMilestone(m.id)} style={{ padding: spacing.sm }}>
-                <Icon name="close" size={18} color={c.textTertiary} />
-              </Pressable>
-            </Row>
+          {build.map((h) => (
+            <HabitRow key={h.id} habit={h} right={pct(recentConsistency(h, idx, today))} />
           ))}
         </Stack>
-      </Card>
-
-      {/* Active commitment */}
-      <SectionHeader title="Active commitment" />
-      {active && progress ? (
-        <Card onPress={() => router.push(`/commitment/${active.id}`)} accessibilityLabel={active.title}>
-          <Stack>
-            <Row justify="space-between" align="flex-start">
-              <View style={{ flex: 1 }}>
-                <Text variant="labelSm" tone="accent" uppercase>
-                  {active.status === 'paused' ? 'Paused' : active.durationDays ? `${active.durationDays}-day commitment` : 'Ongoing commitment'}
-                </Text>
-                <Text variant="headlineSm">{active.title}</Text>
-              </View>
-              <Text variant="headlineMd" tone="accent" tabular>
-                {pct(progress.consistency)}
-              </Text>
-            </Row>
-            {progress.timeRatio !== null ? <ProgressBar value={progress.timeRatio} /> : null}
-            <Row justify="space-between">
-              <Text variant="labelMd" tone="tertiary" tabular>
-                Day {progress.day}
-                {progress.totalDays ? ` of ${progress.totalDays}` : ''}
-              </Text>
-              {progress.daysRemaining !== null ? (
-                <Text variant="labelMd" tone="tertiary" tabular>
-                  {progress.daysRemaining} days remaining
-                </Text>
-              ) : null}
-            </Row>
-          </Stack>
-        </Card>
-      ) : drafts.length ? (
-        drafts.map((d) => (
-          <Card key={d.id} onPress={() => router.push(`/commitment/${d.id}/plan`)} accessibilityLabel={`Draft: ${d.title}`}>
-            <Row>
-              <Pill label="Draft" tone="amber" />
-              <Text variant="labelLg" style={{ flex: 1 }}>
-                {d.title}
-              </Text>
-              <Icon name="chevron-right" />
-            </Row>
-          </Card>
-        ))
-      ) : (
-        <Banner
-          icon="timer"
-          body="A commitment is a focused period of practice toward this goal."
-          action={<Button title="Start a commitment" size="sm" variant="secondary" icon="add" onPress={() => router.push(`/commitment/new?goalId=${goal.id}`)} style={{ alignSelf: 'flex-start', marginTop: spacing.sm }} />}
-        />
-      )}
-
-      {/* Build habits */}
-      {build.length ? (
-        <>
-          <SectionHeader title="Building habits" right={`${build.length}`} />
-          <Stack>
-            {build.map((h) => (
-              <HabitRow key={h.id} habit={h} right={pct(recentConsistency(h, idx, today))} />
-            ))}
-          </Stack>
-        </>
       ) : null}
-
-      {/* Reduce habits */}
       {reduce.length ? (
-        <>
-          <SectionHeader title="Behaviours to reduce" right={`${reduce.length}`} />
-          <Stack>
-            {reduce.map((h) => {
-              const t = reduceTrend(h, today, 7, idx);
-              return (
-                <HabitRow
-                  key={h.id}
-                  habit={h}
-                  subtitle={`Limit ${t.limit}${t.baseline !== null ? ` · baseline ${t.baseline}` : ''}`}
-                  right={
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text variant="labelLg" tabular>
-                        {t.average === null ? '—' : Math.round(t.average)}
-                      </Text>
-                      <Text variant="labelSm" tone="tertiary">
-                        7-day avg
-                      </Text>
-                    </View>
-                  }
-                />
-              );
-            })}
-          </Stack>
-        </>
+        <Stack>
+          {reduce.map((h) => {
+            const t = reduceTrend(h, today, 7, idx);
+            return (
+              <HabitRow
+                key={h.id}
+                habit={h}
+                subtitle={`Limit ${t.limit}${t.baseline !== null ? ` · baseline ${t.baseline}` : ''}`}
+                right={
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text variant="labelLg" tabular>
+                      {t.average === null ? '—' : Math.round(t.average)}
+                    </Text>
+                    <Text variant="labelSm" tone="tertiary">
+                      7-day avg
+                    </Text>
+                  </View>
+                }
+              />
+            );
+          })}
+        </Stack>
       ) : null}
-
-      {/* Past commitments */}
-      {past.length ? (
-        <>
-          <SectionHeader title="Past commitments" right={`${past.length}`} />
-          <Stack>
-            {past.map((k) => {
-              const p = commitmentProgress(k, habits, idx, today);
-              const end = commitmentEndDate(k) ?? today;
-              return (
-                <Card key={k.id} onPress={() => router.push(`/commitment/${k.id}`)} accessibilityLabel={k.title}>
-                  <Row justify="space-between">
-                    <View style={{ flex: 1 }}>
-                      <Text variant="labelLg">{k.title}</Text>
-                      <Text variant="bodySm" tone="tertiary">
-                        {formatRange(k.startDate, end)}
-                      </Text>
-                    </View>
-                    <Pill label={`${pct(p.consistency)} consistency`} tone="sage" />
-                  </Row>
-                </Card>
-              );
-            })}
-          </Stack>
-        </>
-      ) : null}
+      <Button title="Add a habit" variant="secondary" icon="add" onPress={() => router.push(`/habit/new?goalId=${goal.id}`)} />
 
       <Stack>
-        <Button title="Create new commitment" icon="add" onPress={() => router.push(`/commitment/new?goalId=${goal.id}`)} />
-        <Button title="Add linked habit" variant="secondary" icon="repeat" onPress={() => router.push(`/habit/new?goalId=${goal.id}`)} />
         {goal.status === 'active' ? (
-          <Button title="Archive goal" variant="ghost" icon="archive" onPress={() => archiveGoal(goal.id)} />
-        ) : (
+          <Button title="Mark as achieved" icon="emoji-events" variant="secondary" onPress={() => setAchieveOpen('button')} />
+        ) : null}
+        {achieved ? <Button title="Not achieved yet: reopen" variant="ghost" icon="undo" onPress={() => markGoalAchieved(goal.id, false)} /> : null}
+        {goal.status === 'archived' ? (
           <Button title="Restore goal" variant="ghost" icon="unarchive" onPress={() => restoreGoal(goal.id)} />
+        ) : (
+          <Button title="Archive goal" variant="ghost" icon="archive" onPress={() => archiveGoal(goal.id)} />
         )}
         <Text variant="bodySm" tone="tertiary" center>
-          Archiving keeps all of your history.
+          Archiving keeps all of your history. Habits are never changed by it.
         </Text>
       </Stack>
+
+      <Sheet visible={!!achieveOpen} onClose={() => setAchieveOpen(false)} title={achieveOpen === 'signs' ? 'All signs are there' : 'Mark as achieved?'}>
+        <Text variant="bodyMd" tone="secondary">
+          {achieveOpen === 'signs'
+            ? 'Every sign is ticked. Mark the goal as achieved? Your habits for this goal keep going.'
+            : signs.length && signsDone < signs.length
+              ? `${signsDone} of ${signs.length} signs ticked. That's fine: you decide when it's achieved. Your habits for this goal keep going.`
+              : 'Well done. Your habits for this goal keep going; you can archive any you no longer need.'}
+        </Text>
+        <Button
+          title="Yes, I achieved it"
+          icon="emoji-events"
+          onPress={() => {
+            markGoalAchieved(goal.id);
+            setAchieveOpen(false);
+          }}
+        />
+        <Button title="Not yet" variant="ghost" onPress={() => setAchieveOpen(false)} />
+      </Sheet>
+
+      <Sheet visible={!!signSheet} onClose={() => setSignSheet(null)} title={signSheet?.id ? 'Edit sign' : 'Add a sign'}>
+        <Text variant="bodyMd" tone="secondary">
+          Something you&apos;ll notice when the goal is reached.
+        </Text>
+        <TextField value={signDraft} onChangeText={setSignDraft} maxLength={100} showCount accessibilityLabel="Sign" placeholder="e.g. Lost 9 kg" autoFocus onSubmitEditing={saveSign} />
+        <Button title="Save" disabled={!signDraft.trim()} onPress={saveSign} />
+        {signSheet?.id ? (
+          <Button
+            title="Delete sign"
+            variant="ghost"
+            icon="delete-outline"
+            onPress={() => {
+              if (signSheet.id) deleteMilestone(signSheet.id);
+              setSignSheet(null);
+            }}
+          />
+        ) : null}
+      </Sheet>
 
       <Sheet visible={whyOpen} onClose={() => setWhyOpen(false)} title="My why">
         <Text variant="bodyMd" tone="secondary">
@@ -300,18 +308,6 @@ export function GoalDetails() {
         />
       </Sheet>
 
-      <Sheet visible={msOpen} onClose={() => setMsOpen(false)} title="Add milestone">
-        <TextField value={msDraft} onChangeText={setMsDraft} placeholder="e.g. Lead a meeting in English" maxLength={120} accessibilityLabel="Milestone" autoFocus />
-        <Button
-          title="Add milestone"
-          disabled={!msDraft.trim()}
-          onPress={() => {
-            addMilestone({ ownerType: 'goal', ownerId: goal.id, title: msDraft.trim() });
-            setMsOpen(false);
-          }}
-        />
-      </Sheet>
-
       <Sheet visible={editOpen} onClose={() => setEditOpen(false)} title="Rename goal">
         <TextField value={titleDraft} onChangeText={setTitleDraft} maxLength={80} showCount accessibilityLabel="Goal" />
         <Button
@@ -323,7 +319,6 @@ export function GoalDetails() {
           }}
         />
       </Sheet>
-      <View style={{ height: spacing.md, borderRadius: radius.sm }} />
     </Screen>
   );
 }

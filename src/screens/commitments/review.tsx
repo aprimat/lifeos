@@ -9,8 +9,8 @@ import { goBack, Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { EXCEPTION_KINDS, TIME_OF_DAY } from '@/copy';
 import { completeOnboarding, discardDraftCommitment, startCommitment } from '@/data/actions';
-import { formatRange, minutesLabel } from '@/domain/dates';
-import { commitmentEndDate, currentVersion } from '@/domain/schedule';
+import { formatRange, minutesLabel, todayISO } from '@/domain/dates';
+import { commitmentEndDate, currentVersion, runningCommitment } from '@/domain/schedule';
 import { useCommitment, useData, useGoal } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
@@ -34,7 +34,7 @@ export function CommitmentReview() {
   }
 
   const isOnboarding = onboarding === '1';
-  const habits = data.habits.filter((h) => h.commitmentId === commitment.id);
+  const habits = data.habits.filter((h) => commitment.habitIds.includes(h.id));
   const exceptions = data.exceptions.filter((e) => e.commitmentId === commitment.id);
   const milestones = data.milestones.filter((m) => m.ownerType === 'commitment' && m.ownerId === commitment.id);
   const end = commitmentEndDate(commitment);
@@ -42,6 +42,8 @@ export function CommitmentReview() {
   const restDays = [0, 1, 2, 3, 4, 5, 6].filter((d) => !days.includes(d));
   const perWeek = weeklyMinutes(habits);
   const isDraft = commitment.status === 'draft';
+  const other = runningCommitment(data.commitments, todayISO());
+  const blocked = isDraft && !!other && other.id !== commitment.id;
 
   const start = async () => {
     startCommitment(commitment.id);
@@ -58,7 +60,12 @@ export function CommitmentReview() {
       footer={
         isDraft ? (
           <>
-            <Button title="Start commitment" iconRight="arrow-forward" disabled={habits.length === 0} onPress={start} />
+            <Button title="Start commitment" iconRight="arrow-forward" disabled={habits.length === 0 || blocked} onPress={start} />
+            {blocked ? (
+              <Text variant="bodySm" tone="secondary" center>
+                “{other!.title}” is running. One commitment at a time: finish it first.
+              </Text>
+            ) : null}
             <Button
               title="Edit plan"
               variant="secondary"
@@ -221,7 +228,7 @@ export function CommitmentReview() {
           variant="ghost"
           onPress={() => {
             discardDraftCommitment(commitment.id);
-            goBack('/goals');
+            goBack('/habits');
           }}
         />
       ) : null}

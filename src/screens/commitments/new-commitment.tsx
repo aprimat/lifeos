@@ -3,154 +3,151 @@ import { useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/button';
 import { Card, Row, Stack } from '@/components/card';
-import { ChipGroup, SelectableCard, TextField } from '@/components/controls';
+import { ChipGroup, SelectableCard } from '@/components/controls';
 import { Icon } from '@/components/icon';
-import { Field, PageTitle, StepHeader } from '@/components/layout';
+import { EmptyState, Field, PageTitle } from '@/components/layout';
 import { goBack, Screen } from '@/components/screen';
 import { Text } from '@/components/text';
-import { createCommitment, createGoal } from '@/data/actions';
-import { addDays, todayISO } from '@/domain/dates';
-import { useData } from '@/hooks/use-data';
+import { createCommitment, startCommitment } from '@/data/actions';
+import { addDays, diffDays, formatShort } from '@/domain/dates';
+import { runningCommitment } from '@/domain/schedule';
+import { useData, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
-import { focusIcon } from '../goals/shared';
-import { DurationPicker, nextMonday, startDateLabel } from './shared';
+import { habitSubtitle } from '../goals/shared';
+import { MonthCalendar } from '../habits/month-calendar';
+import { COMMITMENT_LENGTHS, pledgeSentence } from './shared';
 
-type Approach = 'template' | 'own';
+type Length = number | 'date';
 
+/**
+ * Make a commitment (plan v1.4 §7): pick habits, pick a length, confirm one sentence.
+ * One at a time; it starts today and never owns the habits.
+ * Params: habitIds (comma list, e.g. from "Change" at the end of the previous one).
+ */
 export function NewCommitment() {
-  const params = useLocalSearchParams<{ goalId?: string; onboarding?: string }>();
-  const onboarding = params.onboarding === '1';
-  const ob = onboarding ? '&onboarding=1' : '';
+  const params = useLocalSearchParams<{ habitIds?: string }>();
   const data = useData();
+  const habits = useLiveHabits();
+  const today = useToday();
   const c = useColors();
-  const activeGoals = data.goals.filter((g) => g.status === 'active');
-  const [goalId, setGoalId] = useState<string | null>(params.goalId ?? activeGoals[0]?.id ?? null);
-  const [newGoalTitle, setNewGoalTitle] = useState('');
-  const [pickingGoal, setPickingGoal] = useState(!params.goalId);
-  const goal = data.goals.find((g) => g.id === goalId);
-  const [title, setTitle] = useState('');
-  const [duration, setDuration] = useState<number | null>(30);
-  const today = todayISO();
-  const startOptions = useMemo(() => {
-    const opts = [
-      { value: today, label: 'Today' },
-      { value: addDays(today, 1), label: 'Tomorrow' },
-    ];
-    const mon = nextMonday(today);
-    if (mon !== addDays(today, 1)) opts.push({ value: mon, label: 'Next Monday' });
-    return opts;
-  }, [today]);
-  const [startDate, setStartDate] = useState(today);
-  const [approach, setApproach] = useState<Approach>('own');
+  const running = runningCommitment(data.commitments, today);
 
-  const hasGoal = !!goal || !!newGoalTitle.trim();
-  const canContinue = hasGoal && (approach === 'template' || !!title.trim());
-
-  // Coming back from the next step and pressing Continue again reuses the goal created
-  // the first time instead of making a duplicate.
-  const createdGoal = useRef<{ title: string; id: string } | null>(null);
-  const resolveGoal = (): string => {
-    if (goal && (!pickingGoal || !newGoalTitle.trim())) return goal.id;
-    const t = newGoalTitle.trim();
-    if (createdGoal.current?.title === t && data.goals.some((g) => g.id === createdGoal.current!.id)) return createdGoal.current.id;
-    const id = createGoal({ title: t, focusArea: null, myWhy: null, desiredOutcome: null });
-    createdGoal.current = { title: t, id };
-    return id;
-  };
-
-  const onContinue = () => {
-    const gid = resolveGoal();
-    if (approach === 'template') {
-      router.push(`/templates?goalId=${gid}${ob}`);
-      return;
+  const choices = useMemo(() => habits.filter((h) => h.status === 'active'), [habits]);
+  // Habits created from here (via "New habit") are picked automatically when you come back.
+  const [openedAt] = useState(() => new Date().toISOString());
+  const [picked, setPicked] = useState<string[]>(() => (params.habitIds ? params.habitIds.split(',') : []));
+  const [unpicked, setUnpicked] = useState<string[]>([]);
+  const selectedIds = choices
+    .filter((h) => picked.includes(h.id) || (h.createdAt > openedAt && !unpicked.includes(h.id)))
+    .map((h) => h.id);
+  const selected = choices.filter((h) => selectedIds.includes(h.id));
+  const toggle = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setPicked((p) => p.filter((x) => x !== id));
+      setUnpicked((u) => [...u, id]);
+    } else {
+      setPicked((p) => [...p, id]);
+      setUnpicked((u) => u.filter((x) => x !== id));
     }
-    const id = createCommitment({ goalId: gid, title: title.trim(), startDate, durationDays: duration });
-    router.replace(`/commitment/${id}/plan${onboarding ? '?onboarding=1' : ''}`);
   };
+
+  const [length, setLength] = useState<Length>(30);
+  const [until, setUntil] = useState(addDays(today, 29));
+  const [month, setMonth] = useState(today);
+  const days = length === 'date' ? diffDays(today, until) + 1 : length;
+
+  const creating = useRef(false);
+  const commit = () => {
+    if (creating.current || !selected.length) return;
+    creating.current = true;
+    const title = length === 'date' ? `Until ${formatShort(until)}` : `${days}-day commitment`;
+    const id = createCommitment({ goalId: null, title, startDate: today, durationDays: days, habitIds: selectedIds });
+    startCommitment(id);
+    router.replace(`/commitment/${id}`);
+  };
+
+  if (running) {
+    return (
+      <Screen title="Make a commitment" back={() => goBack('/habits')}>
+        <EmptyState
+          icon="track-changes"
+          title="One commitment at a time"
+          body={`“${running.title}” is running. Finish it or end it early to make a new one.`}
+          actionLabel="Open current commitment"
+          onAction={() => router.replace(`/commitment/${running.id}`)}
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen
-      title="New commitment"
-      back={() => goBack('/goals')}
-      footer={<Button title="Continue" iconRight="arrow-forward" disabled={!canContinue} onPress={onContinue} />}>
-      <StepHeader step={1} total={3} label="Commitment" />
-      <PageTitle title="Make a commitment to yourself." subtitle="A commitment is a focused period of action toward a goal." />
+      title="Make a commitment"
+      back={() => goBack('/habits')}
+      footer={<Button title="I commit" icon="check" disabled={!selected.length || days < 1} onPress={commit} />}>
+      <PageTitle title="Promise yourself a period of focus." subtitle="Pick habits, pick how long. Your habits carry on afterwards either way." />
 
-      <Field label="Goal">
-        {goal && !pickingGoal ? (
-          <Card inset onPress={() => setPickingGoal(true)} accessibilityLabel={`Goal: ${goal.title}. Change`}>
-            <Row>
-              <Icon name={focusIcon(goal.focusArea)} size={20} color={c.primaryText} />
-              <Text variant="labelLg" style={{ flex: 1 }}>
-                {goal.title}
-              </Text>
-              <Text variant="labelMd" tone="accent">
-                Change
-              </Text>
-            </Row>
-          </Card>
-        ) : (
-          <Stack>
-            {activeGoals.length ? (
-              <ChipGroup
-                options={activeGoals.map((g) => ({ value: g.id, label: g.title, icon: focusIcon(g.focusArea) }))}
-                value={newGoalTitle.trim() ? null : goalId}
-                onChange={(v) => {
-                  setGoalId(v as string);
-                  setNewGoalTitle('');
-                  setPickingGoal(false);
-                }}
-              />
-            ) : null}
-            <TextField
-              value={newGoalTitle}
-              onChangeText={setNewGoalTitle}
-              placeholder={activeGoals.length ? 'Or name a new goal' : 'Name the goal, e.g. Improve my English'}
-              maxLength={80}
-              accessibilityLabel="New goal"
-            />
-          </Stack>
-        )}
-      </Field>
-
-      <Field label="Starting approach">
+      <Field label="Habits">
         <Stack>
-          <SelectableCard
-            icon="auto-awesome-mosaic"
-            title="Use a suggested template"
-            description="Starter habits and milestones you can adjust before starting."
-            selected={approach === 'template'}
-            onPress={() => setApproach('template')}
-          />
-          <SelectableCard
-            icon="edit"
-            title="Build my own"
-            description="Choose your own habits and rhythm."
-            selected={approach === 'own'}
-            onPress={() => setApproach('own')}
-          />
+          {choices.map((h) => (
+            <SelectableCard
+              key={h.id}
+              multiple
+              icon={h.icon}
+              title={h.title}
+              description={habitSubtitle(h)}
+              selected={selectedIds.includes(h.id)}
+              onPress={() => toggle(h.id)}
+            />
+          ))}
+          {choices.length === 0 ? (
+            <Text variant="bodySm" tone="tertiary">
+              No habits yet. Create one to commit to.
+            </Text>
+          ) : null}
+          <Button title="New habit" variant="ghost" icon="add" onPress={() => router.push('/habit/new?return=1')} />
         </Stack>
       </Field>
 
-      {approach === 'own' ? (
-        <>
-          <Field label="Commitment name">
-            <TextField value={title} onChangeText={setTitle} placeholder="e.g. Practice English consistently" maxLength={80} accessibilityLabel="Commitment name" />
-          </Field>
-          <Field label="Duration">
-            <DurationPicker value={duration} onChange={setDuration} />
-          </Field>
-          <Field label="Start date" hint={startDateLabel(startDate)}>
-            <ChipGroup options={startOptions} value={startDate} onChange={(v) => setStartDate(v as string)} />
-          </Field>
-        </>
-      ) : (
-        <Text variant="bodySm" tone="tertiary" style={{ paddingHorizontal: spacing.xs }}>
-          You&apos;ll pick a template next, then set its length and start date.
-        </Text>
-      )}
+      <Field label="How long">
+        <ChipGroup
+          options={[...COMMITMENT_LENGTHS.map((d) => ({ value: String(d), label: `${d} days` })), { value: 'date', label: 'Until a date' }]}
+          value={String(length)}
+          onChange={(v) => setLength(v === 'date' ? 'date' : Number(v))}
+        />
+        {length === 'date' ? (
+          <Card>
+            <MonthCalendar
+              month={month}
+              onMonthChange={setMonth}
+              today={today}
+              onDayPress={(d) => {
+                if (d >= today) setUntil(d);
+              }}
+              cell={(d) => {
+                if (d < today) return { fg: c.textTertiary };
+                if (d === until) return { bg: c.primary, fg: c.onPrimary, label: 'Last day' };
+                if (d > today && d < until) return { bg: c.primarySoft };
+                return {};
+              }}
+            />
+          </Card>
+        ) : null}
+      </Field>
+
+      <Card>
+        <Row align="flex-start">
+          <Icon name="format-quote" size={22} color={c.primaryText} />
+          <Text variant="bodyLg" style={{ flex: 1 }}>
+            {pledgeSentence(days, length === 'date' ? until : null, selected)}
+          </Text>
+        </Row>
+      </Card>
+      <Text variant="bodySm" tone="tertiary" style={{ paddingHorizontal: spacing.xs }}>
+        Starts today, {formatShort(today)}. Today shows how it&apos;s going, and at the end you&apos;ll see how it went.
+      </Text>
     </Screen>
   );
 }

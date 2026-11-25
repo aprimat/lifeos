@@ -43,7 +43,6 @@ export default function TemplatesRoute() {
             </Text>
             <Row wrap gap={spacing.xs} style={{ marginTop: spacing.xs }}>
               <Pill label={focusLabel(t.focusArea)} tone="primary" />
-              <Pill label={`${t.durationDays} days`} />
               <Pill label={`${habits.length} habit${habits.length === 1 ? '' : 's'}`} />
             </Row>
           </View>
@@ -57,7 +56,7 @@ export default function TemplatesRoute() {
     <Screen back title="Templates">
       <PageTitle
         title="Pick a starting point"
-        subtitle="Templates suggest a goal, a commitment and a few small habits. You can change anything before you start."
+        subtitle="Each template suggests a few small habits. Pick the ones you want; you can change anything later."
       />
       {matching.length > 0 ? (
         <>

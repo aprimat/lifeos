@@ -24,6 +24,10 @@ export interface DataIndex {
   logsByHabit: Map<ID, Map<ISODate, ActivityLog>>;
   /** habitId → dates that received a rescheduled session. */
   rescheduledInto: Map<ID, Set<ISODate>>;
+  /** habitId → ids of the commitments that cover it (any status). */
+  commitmentsByHabit: Map<ID, Set<ID>>;
+  /** Habits set up inside a draft commitment that hasn't started: hidden until it does. */
+  draftHabits: Set<ID>;
   exceptions: ScheduleException[];
 }
 
@@ -44,7 +48,23 @@ export function buildIndex(
       s.add(log.rescheduledTo);
     }
   }
-  return { habitsById, commitmentsById, logsByHabit, rescheduledInto, exceptions: data.exceptions };
+  const commitmentsByHabit = new Map<ID, Set<ID>>();
+  const draftHabits = new Set<ID>();
+  for (const c of data.commitments) {
+    for (const hid of c.habitIds) {
+      let s = commitmentsByHabit.get(hid);
+      if (!s) commitmentsByHabit.set(hid, (s = new Set()));
+      s.add(c.id);
+      const h = habitsById.get(hid);
+      if (c.status === 'draft' && h && isDraftsOwnHabit(c, h)) draftHabits.add(hid);
+    }
+  }
+  return { habitsById, commitmentsById, logsByHabit, rescheduledInto, commitmentsByHabit, draftHabits, exceptions: data.exceptions };
+}
+
+/** A habit set up while creating a draft (as opposed to an existing habit the draft points at). */
+export function isDraftsOwnHabit(c: Commitment, h: Habit): boolean {
+  return c.habitIds.includes(h.id) && h.createdAt >= c.createdAt;
 }
 
 export function getLog(idx: DataIndex, habitId: ID, date: ISODate): ActivityLog | undefined {
@@ -87,20 +107,25 @@ function inAnyRange(date: ISODate, ranges: { start: ISODate; end: ISODate | null
   return ranges.some((r) => inRange(date, r.start, r.end));
 }
 
-/** Is the habit "live" on this date (started, not archived/paused, commitment running)? */
+/**
+ * Is the habit "live" on this date (started, not archived or paused)? A commitment never
+ * stops a habit; only a draft one that hasn't started yet keeps its new habits hidden.
+ */
 export function isHabitActiveOn(habit: Habit, date: ISODate, idx: DataIndex): boolean {
   if (date < habit.startDate) return false;
   if (habit.archivedAt && date > habit.archivedAt) return false;
   if (inAnyRange(date, habit.pauses)) return false;
-  if (habit.commitmentId) {
-    const c = idx.commitmentsById.get(habit.commitmentId);
-    if (!c || c.status === 'draft') return false;
-    if (date < c.startDate) return false;
-    const end = commitmentEndDate(c);
-    if (end && date > end) return false;
-    if (inAnyRange(date, c.pauses)) return false;
-  }
+  if (idx.draftHabits.has(habit.id)) return false;
   return true;
+}
+
+/** The commitment running now (active or paused, not past its end) — at most one. */
+export function runningCommitment(commitments: Commitment[], today: ISODate): Commitment | undefined {
+  return commitments.find((c) => {
+    if (c.status !== 'active' && c.status !== 'paused') return false;
+    const end = commitmentEndDate(c);
+    return !end || end >= today;
+  });
 }
 
 export function exceptionFor(
@@ -114,7 +139,7 @@ export function exceptionFor(
       date <= e.end &&
       ((e.habitId === null && e.commitmentId === null) ||
         e.habitId === habit.id ||
-        (e.commitmentId !== null && e.commitmentId === habit.commitmentId)),
+        (e.commitmentId !== null && !!idx.commitmentsByHabit.get(habit.id)?.has(e.commitmentId))),
   );
 }
 

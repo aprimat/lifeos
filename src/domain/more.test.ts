@@ -118,8 +118,8 @@ describe('schedule helpers', () => {
   it('treats archived, paused and draft-commitment habits as inactive', () => {
     const archived = makeHabit({ archivedAt: '2026-11-05' });
     const paused = makeHabit({ pauses: [{ start: '2026-11-04', end: null }] });
-    const draft = makeCommitment({ status: 'draft' });
-    const inDraft = makeHabit({ commitmentId: draft.id });
+    const inDraft = makeHabit();
+    const draft = makeCommitment({ status: 'draft', habitIds: [inDraft.id] });
     const i = idx([archived, paused, inDraft], [], [], [draft]);
     expect(occurrence(archived, '2026-11-06', i, '2026-11-10').status).toBe('none');
     expect(occurrence(paused, '2026-11-08', i, '2026-11-10').status).toBe('none');
@@ -137,11 +137,15 @@ describe('schedule helpers', () => {
   });
 
   it('applies commitment-wide and global exceptions', () => {
-    const c = makeCommitment();
-    const h = makeHabit({ commitmentId: c.id });
+    const h = makeHabit();
+    const c = makeCommitment({ habitIds: [h.id] });
+    const wide = makeException({ commitmentId: c.id, start: '2026-11-05', end: '2026-11-05' });
+    const other = makeHabit();
     const global = makeException({ start: '2026-11-04', end: '2026-11-04' });
-    const i = idx([h], [], [global], [c]);
+    const i = idx([h, other], [], [global, wide], [c]);
     expect(occurrence(h, '2026-11-04', i, '2026-11-10').status).toBe('rest');
+    expect(occurrence(h, '2026-11-05', i, '2026-11-10').status).toBe('rest');
+    expect(occurrence(other, '2026-11-05', i, '2026-11-10').status).toBe('missed');
   });
 
   it('supports exact-date schedules and reports flexibility', () => {
@@ -186,8 +190,8 @@ describe('analytics extras', () => {
   });
 
   it('reports ongoing commitments without an end date', () => {
-    const c = makeCommitment({ durationDays: null });
-    const h = makeHabit({ commitmentId: c.id });
+    const h = makeHabit();
+    const c = makeCommitment({ durationDays: null, habitIds: [h.id] });
     const p = commitmentProgress(c, [h], idx([h], [makeLog(h.id, '2026-11-02', 'full')], [], [c]), '2026-11-04');
     expect(p).toMatchObject({ day: 3, totalDays: null, daysRemaining: null, plannedTotal: null, timeRatio: null });
     expect(p.breakdown).toMatchObject({ eligible: 2, done: 1 });
@@ -195,7 +199,8 @@ describe('analytics extras', () => {
 
   it('counts flexible weeks inside commitment plans and ranges', () => {
     const c = makeCommitment({ durationDays: 14 });
-    const h = makeHabit({ commitmentId: c.id }, { schedule: { type: 'flexWeekly', timesPerWeek: 2 } });
+    const h = makeHabit({}, { schedule: { type: 'flexWeekly', timesPerWeek: 2 } });
+    c.habitIds = [h.id];
     const logs = [makeLog(h.id, '2026-11-03', 'minimum'), makeLog(h.id, '2026-11-05', 'skipped')];
     const i = idx([h], logs, [], [c]);
     expect(commitmentProgress(c, [h], i, '2026-11-20').plannedTotal).toBe(4);

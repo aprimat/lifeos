@@ -1,6 +1,6 @@
 import { addDays, todayISO } from '@/domain/dates';
 import { newlyReachedMilestones } from '@/domain/analytics';
-import { buildIndex, commitmentEndDate, currentVersion, versionOn } from '@/domain/schedule';
+import { buildIndex, commitmentEndDate, currentVersion, isDraftsOwnHabit, versionOn } from '@/domain/schedule';
 import type { SuggestedChange } from '@/domain/suggestions';
 import type {
   ActivityLog,
@@ -62,7 +62,7 @@ export function createGoal(input: GoalInput): ID {
   return goal.id;
 }
 
-export function updateGoal(id: ID, patch: Partial<GoalInput & Pick<Goal, 'status'>>) {
+export function updateGoal(id: ID, patch: Partial<GoalInput & Pick<Goal, 'status' | 'achievedAt'>>) {
   mutate((d) => ({ goals: replace(d.goals, id, patch) }));
 }
 
@@ -71,7 +71,12 @@ export function archiveGoal(id: ID) {
 }
 
 export function restoreGoal(id: ID) {
-  updateGoal(id, { status: 'active' });
+  updateGoal(id, { status: 'active', achievedAt: null });
+}
+
+/** A goal is a result: the user says when it's reached. Its habits are left as they are. */
+export function markGoalAchieved(id: ID, achieved = true) {
+  updateGoal(id, achieved ? { status: 'achieved', achievedAt: todayISO() } : { status: 'active', achievedAt: null });
 }
 
 // ---------------- Milestones ----------------
@@ -91,6 +96,15 @@ export function setMilestoneAchieved(id: ID, achieved: boolean) {
   mutate((d) => ({ milestones: replace(d.milestones, id, { achievedAt: achieved ? todayISO() : null }) }));
 }
 
+/** A sign that a goal is achieved (plan v1.4): a goal milestone the user ticks themselves. */
+export function addGoalSign(goalId: ID, title: string): ID {
+  return addMilestone({ ownerType: 'goal', ownerId: goalId, title: title.trim() });
+}
+
+export function renameMilestone(id: ID, title: string) {
+  mutate((d) => ({ milestones: replace(d.milestones, id, { title: title.trim() }) }));
+}
+
 export function deleteMilestone(id: ID) {
   mutate((d) => ({ milestones: d.milestones.filter((m) => m.id !== id) }));
 }
@@ -98,13 +112,14 @@ export function deleteMilestone(id: ID) {
 // ---------------- Commitments ----------------
 
 export type CommitmentInput = Pick<Commitment, 'goalId' | 'title' | 'startDate' | 'durationDays'> &
-  Partial<Pick<Commitment, 'templateId' | 'renewedFromId'>>;
+  Partial<Pick<Commitment, 'templateId' | 'renewedFromId' | 'habitIds'>>;
 
 /** Creates a commitment in `draft` status. Habits are added, then `startCommitment` activates it. */
 export function createCommitment(input: CommitmentInput): ID {
   const c = entity<Omit<Commitment, 'id' | 'createdAt' | 'updatedAt'>>({
     templateId: null,
     renewedFromId: null,
+    habitIds: [],
     ...input,
     status: 'draft',
     pauses: [],
@@ -114,21 +129,30 @@ export function createCommitment(input: CommitmentInput): ID {
   return c.id;
 }
 
+/** Habits a draft set up for itself start with it. */
+function shiftHabitStart(h: Habit, startDate: ISODate): Habit {
+  return { ...h, startDate, versions: h.versions.map((v, i) => (i === 0 ? { ...v, effectiveFrom: startDate } : v)), updatedAt: now() };
+}
+
 export function updateCommitment(id: ID, patch: Partial<Pick<Commitment, 'title' | 'startDate' | 'durationDays' | 'goalId'>>) {
   mutate((d) => {
     const commitments = replace(d.commitments, id, patch);
-    // Keep habits of a draft commitment starting with it.
     const c = commitments.find((x) => x.id === id);
     const habits =
       c && c.status === 'draft' && patch.startDate
-        ? d.habits.map((h) =>
-            h.commitmentId === id
-              ? { ...h, startDate: c.startDate, versions: h.versions.map((v, i) => (i === 0 ? { ...v, effectiveFrom: c.startDate } : v)) }
-              : h,
-          )
+        ? d.habits.map((h) => (isDraftsOwnHabit(c, h) ? shiftHabitStart(h, c.startDate) : h))
         : d.habits;
     return { commitments, habits };
   });
+}
+
+/** Add a habit to a commitment (it keeps its own schedule and history). */
+export function addHabitToCommitment(commitmentId: ID, habitId: ID) {
+  mutate((d) => ({
+    commitments: d.commitments.map((c) =>
+      c.id === commitmentId && !c.habitIds.includes(habitId) ? { ...c, habitIds: [...c.habitIds, habitId], updatedAt: now() } : c,
+    ),
+  }));
 }
 
 export function startCommitment(id: ID) {
@@ -139,22 +163,40 @@ export function startCommitment(id: ID) {
   mutate((d) => ({ commitments: replace(d.commitments, id, { status: 'active' }) }));
 }
 
-/** Discards a draft and its habits (nothing has been logged yet). */
+/** Discards a draft. Habits it created (never logged, in no other commitment) go with it. */
 export function discardDraftCommitment(id: ID) {
-  mutate((d) => ({
-    commitments: d.commitments.filter((c) => c.id !== id),
-    habits: d.habits.filter((h) => h.commitmentId !== id),
-    milestones: d.milestones.filter((m) => !(m.ownerType === 'commitment' && m.ownerId === id)),
-    exceptions: d.exceptions.filter((e) => e.commitmentId !== id),
-  }));
+  mutate((d) => {
+    const draft = d.commitments.find((c) => c.id === id);
+    const elsewhere = new Set(d.commitments.filter((c) => c.id !== id).flatMap((c) => c.habitIds));
+    const logged = new Set(d.logs.map((l) => l.habitId));
+    const drop = new Set(
+      d.habits.filter((h) => draft && isDraftsOwnHabit(draft, h) && !elsewhere.has(h.id) && !logged.has(h.id)).map((h) => h.id),
+    );
+    return {
+      commitments: d.commitments.filter((c) => c.id !== id),
+      habits: d.habits.filter((h) => !drop.has(h.id)),
+      milestones: d.milestones.filter((m) => !(m.ownerType === 'commitment' && m.ownerId === id)),
+      exceptions: d.exceptions.filter((e) => e.commitmentId !== id && !(e.habitId && drop.has(e.habitId))),
+    };
+  });
 }
 
+/** Pausing a commitment pauses its habits too (they are what the commitment is about). */
 export function pauseCommitment(id: ID, start: ISODate = todayISO(), end: ISODate | null = null) {
-  mutate((d) => ({
-    commitments: d.commitments.map((c) =>
-      c.id === id ? { ...c, status: 'paused', pauses: [...c.pauses, { start, end }], updatedAt: now() } : c,
-    ),
-  }));
+  mutate((d) => {
+    const c = d.commitments.find((x) => x.id === id);
+    const ids = new Set(c?.habitIds ?? []);
+    return {
+      commitments: d.commitments.map((x) =>
+        x.id === id ? { ...x, status: 'paused', pauses: [...x.pauses, { start, end }], updatedAt: now() } : x,
+      ),
+      habits: d.habits.map((h) =>
+        ids.has(h.id) && h.status === 'active'
+          ? { ...h, status: end === null ? 'paused' : h.status, pauses: [...h.pauses, { start, end }], updatedAt: now() }
+          : h,
+      ),
+    };
+  });
 }
 
 /** Resuming: pauses that cover today end yesterday; pauses that start today or later are dropped. */
@@ -165,19 +207,25 @@ function endPausesBefore<P extends { start: ISODate; end: ISODate | null }>(paus
     .filter((p) => p.end! >= p.start);
 }
 
+function resumed(h: Habit, today: ISODate): Habit {
+  return { ...h, status: 'active', pauses: endPausesBefore(h.pauses, today), updatedAt: now() };
+}
+
 export function resumeCommitment(id: ID) {
-  mutate((d) => ({
-    commitments: d.commitments.map((c) =>
-      c.id === id
-        ? {
-            ...c,
-            status: 'active',
-            pauses: endPausesBefore(c.pauses, todayISO()),
-            updatedAt: now(),
-          }
-        : c,
-    ),
-  }));
+  const today = todayISO();
+  mutate((d) => {
+    const c = d.commitments.find((x) => x.id === id);
+    const ids = new Set(c?.habitIds ?? []);
+    // Resume only habits paused together with the commitment, not ones paused on their own.
+    const starts = new Set((c?.pauses ?? []).filter((p) => p.end === null).map((p) => p.start));
+    const pausedWith = (h: Habit) => ids.has(h.id) && h.status === 'paused' && h.pauses.some((p) => p.end === null && starts.has(p.start));
+    return {
+      commitments: d.commitments.map((x) =>
+        x.id === id ? { ...x, status: 'active', pauses: endPausesBefore(x.pauses, today), updatedAt: now() } : x,
+      ),
+      habits: d.habits.map((h) => (pausedWith(h) ? resumed(h, today) : h)),
+    };
+  });
 }
 
 export function extendCommitment(id: ID, extraDays: number) {
@@ -190,7 +238,7 @@ export function extendCommitment(id: ID, extraDays: number) {
   }));
 }
 
-/** Finish (status completed) or archive/end early. History is kept. */
+/** Finish (status completed) or archive/end early. History is kept; the habits carry on. */
 export function endCommitment(id: ID, status: 'completed' | 'archived' = 'completed') {
   const today = todayISO();
   mutate((d) => ({
@@ -201,27 +249,16 @@ export function endCommitment(id: ID, status: 'completed' | 'archived' = 'comple
 }
 
 /**
- * Copies habits (current version) into a new owner, starting on `startDate`.
- * Used by renew / keep-habits so the original commitment's history stays intact.
+ * Habits that were paused only because their commitment ran out (data from before v1.4):
+ * an open pause starting the day after the commitment's end. Resumed by renew / keep habits.
  */
-function cloneHabits(habits: Habit[], startDate: ISODate, owner: { commitmentId: ID | null; goalId: ID | null }, targetScale = 1): Habit[] {
-  return habits.map((h) => {
-    const v = currentVersion(h);
-    const build = v.build && targetScale !== 1 ? { ...v.build, target: Math.max(1, Math.round(v.build.target * targetScale)) } : v.build;
-    return entity<Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>>({
-      kind: h.kind,
-      title: h.title,
-      icon: h.icon,
-      goalId: owner.goalId ?? h.goalId,
-      commitmentId: owner.commitmentId,
-      status: 'active',
-      startDate,
-      archivedAt: null,
-      pauses: [],
-      versions: [{ ...v, build, effectiveFrom: startDate }],
-      safetyAcknowledged: h.safetyAcknowledged,
-    });
-  });
+function resumeStoppedByEnd(habits: Habit[], c: Commitment, today: ISODate): Habit[] {
+  const end = commitmentEndDate(c);
+  if (!end) return habits;
+  const from = addDays(end, 1);
+  return habits.map((h) =>
+    c.habitIds.includes(h.id) && h.status === 'paused' && h.pauses.some((p) => p.end === null && p.start === from) ? resumed(h, today) : h,
+  );
 }
 
 export function renewCommitment(id: ID, opts: { durationDays: number | null; targetScale?: number }): ID | null {
@@ -233,8 +270,10 @@ export function renewCommitment(id: ID, opts: { durationDays: number | null; tar
   const oldEnd = commitmentEndDate(old);
   const stillRunning = oldEnd === null || oldEnd >= today;
   const startDate = stillRunning ? addDays(today, 1) : today;
+  const live = new Set(d.habits.filter((h) => h.status !== 'archived').map((h) => h.id));
   const c = entity<Omit<Commitment, 'id' | 'createdAt' | 'updatedAt'>>({
     goalId: old.goalId,
+    habitIds: old.habitIds.filter((h) => live.has(h)),
     title: old.title,
     startDate,
     durationDays: opts.durationDays,
@@ -244,24 +283,26 @@ export function renewCommitment(id: ID, opts: { durationDays: number | null; tar
     pauses: [],
     endedAt: null,
   });
-  const oldHabits = d.habits.filter((h) => h.commitmentId === id && h.status !== 'archived');
-  const habits = cloneHabits(oldHabits, startDate, { commitmentId: c.id, goalId: old.goalId }, opts.targetScale ?? 1);
   mutate((x) => ({
     commitments: [...x.commitments.map((k) => (k.id === id && k.status !== 'archived' ? { ...k, status: 'completed' as const, endedAt: k.endedAt ?? addDays(startDate, -1) } : k)), c],
-    habits: [...x.habits, ...habits],
+    habits: resumeStoppedByEnd(x.habits, old, today),
   }));
+  // A harder or easier challenge applies from the new start; the past keeps its targets.
+  const scale = opts.targetScale ?? 1;
+  if (scale !== 1) {
+    for (const h of data().habits.filter((x) => c.habitIds.includes(x.id))) {
+      const v = currentVersion(h);
+      if (v.build) updateHabit(h.id, {}, { build: { ...v.build, target: Math.max(1, Math.round(v.build.target * scale)) } }, startDate);
+    }
+  }
   return c.id;
 }
 
-/** Continue the commitment's habits as standalone habits from today. */
+/** The commitment is over; its habits simply continue. */
 export function keepHabitsOngoing(id: ID) {
-  const d = data();
-  const old = d.commitments.find((c) => c.id === id);
+  const old = data().commitments.find((c) => c.id === id);
   if (!old) return;
-  const oldHabits = d.habits.filter((h) => h.commitmentId === id && h.status !== 'archived');
-  // Start tomorrow: the ended commitment still covers today, so starting today would count it twice.
-  const habits = cloneHabits(oldHabits, addDays(todayISO(), 1), { commitmentId: null, goalId: old.goalId });
-  mutate((x) => ({ habits: [...x.habits, ...habits] }));
+  mutate((x) => ({ habits: resumeStoppedByEnd(x.habits, old, todayISO()) }));
 }
 
 export function saveCommitmentReview(input: Omit<CommitmentReview, 'id' | 'createdAt' | 'updatedAt'>) {
@@ -274,13 +315,15 @@ export function saveCommitmentReview(input: Omit<CommitmentReview, 'id' | 'creat
 
 // ---------------- Habits ----------------
 
-export type HabitInput = Pick<Habit, 'kind' | 'title' | 'icon' | 'goalId' | 'commitmentId' | 'startDate'> & {
+export type HabitInput = Pick<Habit, 'kind' | 'title' | 'icon' | 'goalIds' | 'startDate'> & {
   version: Omit<HabitVersion, 'effectiveFrom'>;
   safetyAcknowledged?: boolean;
+  /** Also add the new habit to this commitment. */
+  commitmentId?: ID | null;
 };
 
 export function createHabit(input: HabitInput): ID {
-  const { version, ...rest } = input;
+  const { version, commitmentId, ...rest } = input;
   const h = entity<Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>>({
     ...rest,
     status: 'active',
@@ -290,6 +333,7 @@ export function createHabit(input: HabitInput): ID {
     safetyAcknowledged: input.safetyAcknowledged ?? false,
   });
   mutate((d) => ({ habits: [...d.habits, h] }));
+  if (commitmentId) addHabitToCommitment(commitmentId, h.id);
   return h.id;
 }
 
@@ -299,7 +343,7 @@ export function createHabit(input: HabitInput): ID {
  */
 export function updateHabit(
   id: ID,
-  patch: Partial<Pick<Habit, 'title' | 'icon' | 'goalId' | 'commitmentId' | 'safetyAcknowledged'>>,
+  patch: Partial<Pick<Habit, 'title' | 'icon' | 'goalIds' | 'safetyAcknowledged'>>,
   versionPatch?: Partial<Omit<HabitVersion, 'effectiveFrom'>>,
   from: ISODate = todayISO(),
 ) {
@@ -365,6 +409,7 @@ export function archiveHabit(id: ID) {
 export function deleteHabit(id: ID) {
   mutate((d) => ({
     habits: d.habits.filter((h) => h.id !== id),
+    commitments: d.commitments.map((c) => (c.habitIds.includes(id) ? { ...c, habitIds: c.habitIds.filter((x) => x !== id) } : c)),
     logs: d.logs.filter((l) => l.habitId !== id),
     exceptions: d.exceptions.filter((e) => e.habitId !== id),
   }));

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Button, IconButton } from '@/components/button';
-import { Card, IconTile, Row, Stack } from '@/components/card';
+import { Card, Row, Stack } from '@/components/card';
 import { Chip } from '@/components/controls';
 import { Icon } from '@/components/icon';
 import { Banner, EmptyState, Pill, SectionHeader } from '@/components/layout';
@@ -13,10 +13,9 @@ import { Text } from '@/components/text';
 import { DISPOSITIONS, greeting, TIME_OF_DAY } from '@/copy';
 import { dismissPrompt } from '@/data/actions';
 import { useStore } from '@/data/store';
-import { dailyCompletion, dailySeries, dayPlan, flexibleForDay } from '@/domain/analytics';
+import { commitmentProgress, dailyCompletion, dailySeries, dayPlan, flexibleForDay, pct } from '@/domain/analytics';
 import { addDays, diffDays, endOfWeek, formatLong, formatShort, startOfWeek, weekdayIndex } from '@/domain/dates';
 import { commitmentDay, commitmentEndDate, occurrence, scheduleMatches, type Occurrence } from '@/domain/schedule';
-import type { Commitment } from '@/domain/types';
 import { useTimer } from '@/services/timer';
 import { useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
@@ -63,28 +62,17 @@ export function TodayScreen() {
   const editable = selected <= today && age <= EDIT_WINDOW_DAYS;
   const isToday = selected === today;
 
-  // Group planned items: by active commitment, then the rest by time of day.
-  const { commitmentGroups, timeGroups } = useMemo(() => {
-    const byCommitment = new Map<string, Occurrence[]>();
-    const rest: Occurrence[] = [];
-    const active = new Map(data.commitments.filter((k) => k.status === 'active').map((k) => [k.id, k]));
-    for (const o of plan) {
-      const cid = o.habit.commitmentId;
-      if (cid && active.has(cid)) {
-        const arr = byCommitment.get(cid) ?? [];
-        arr.push(o);
-        byCommitment.set(cid, arr);
-      } else rest.push(o);
-    }
-    // Running commitments with nothing planned today (rest days) still appear, quietly.
-    for (const k of active.values()) {
-      const end = commitmentEndDate(k);
-      if (!byCommitment.has(k.id) && k.startDate <= selected && (!end || selected <= end)) byCommitment.set(k.id, []);
-    }
-    const commitmentGroups = [...byCommitment.entries()].map(([id, items]) => ({ commitment: active.get(id) as Commitment, items }));
-    const timeGroups = TIME_OF_DAY.map((t) => ({ ...t, items: rest.filter((o) => o.version.timeOfDay === t.value) })).filter((g) => g.items.length);
-    return { commitmentGroups, timeGroups };
-  }, [plan, data.commitments, selected]);
+  // Planned items grouped by time of day. A running commitment is one line above them (plan v1.4 §3).
+  const timeGroups = useMemo(
+    () => TIME_OF_DAY.map((t) => ({ ...t, items: plan.filter((o) => o.version.timeOfDay === t.value) })).filter((g) => g.items.length),
+    [plan],
+  );
+  const commitment = data.commitments.find((k) => {
+    if (k.status !== 'active' && k.status !== 'paused') return false;
+    const end = commitmentEndDate(k);
+    return k.startDate <= selected && (!end || selected <= end);
+  });
+  const commitmentStats = commitment ? commitmentProgress(commitment, habits, idx, today) : null;
 
   // Yesterday's unlogged items (optional, dismissible).
   const yesterday = addDays(today, -1);
@@ -137,6 +125,22 @@ export function TodayScreen() {
           <Card padding={spacing.sm}>
             <WeekStrip days={series} selected={selected} today={today} onSelect={setSelected} />
           </Card>
+
+          {commitment && commitmentStats ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Your commitment: day ${Math.max(1, commitmentDay(commitment, selected))}${commitment.durationDays ? ` of ${commitment.durationDays}` : ''}, ${pct(commitmentStats.consistency)} kept. Open`}
+              onPress={() => router.push(`/commitment/${commitment.id}`)}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, minHeight: 44, borderRadius: 12, backgroundColor: c.primarySoft, opacity: pressed ? 0.8 : 1 })}>
+              <Icon name="track-changes" size={18} color={c.primaryText} />
+              <Text variant="labelLg" tone="accent" tabular style={{ flex: 1 }}>
+                {commitment.status === 'paused' ? 'Commitment paused · ' : ''}Day {Math.max(1, commitmentDay(commitment, selected))}
+                {commitment.durationDays ? ` of ${commitment.durationDays}` : ''}
+                {commitmentStats.consistency !== null ? ` · ${pct(commitmentStats.consistency)} kept` : ''}
+              </Text>
+              <Icon name="chevron-right" size={18} color={c.primaryText} />
+            </Pressable>
+          ) : null}
 
           {!isToday ? (
             <Banner
@@ -223,7 +227,7 @@ export function TodayScreen() {
                     <View style={{ flex: 1, gap: 4 }}>
                       <Text variant="labelLg">{k.title} has reached its end date</Text>
                       <Text variant="bodySm" tone="secondary">
-                        Take a moment to look back and choose what comes next. Your goal continues.
+                        See how it went and choose what comes next. Your habits keep going.
                       </Text>
                     </View>
                     <Icon name="chevron-right" size={20} color={c.textTertiary} />
@@ -264,44 +268,6 @@ export function TodayScreen() {
             </Card>
           ) : null}
 
-          {commitmentGroups.map(({ commitment, items }) => {
-            const done = items.filter((o) => o.done).length;
-            return (
-              <View key={commitment.id} style={{ gap: spacing.sm }}>
-                <SectionHeader title="Your commitment" right={items.length ? `${done} of ${items.length}` : 'Rest day'} />
-                <Card>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Open commitment ${commitment.title}`}
-                    onPress={() => router.push(`/commitment/${commitment.id}`)}>
-                    <Row gap={spacing.md} align="flex-start">
-                      <IconTile tone="primary">
-                        <Icon name="flag" size={22} color={c.primaryText} />
-                      </IconTile>
-                      <View style={{ flex: 1 }}>
-                        <Text variant="headlineSm">{commitment.title}</Text>
-                        <Text variant="bodySm" tone="secondary">
-                          Day {Math.max(1, commitmentDay(commitment, selected))}
-                          {commitment.durationDays ? ` of ${commitment.durationDays}` : ' · ongoing'}
-                        </Text>
-                      </View>
-                      {items.length ? <Pill label={`${done} / ${items.length}`} tone={done === items.length ? 'sage' : 'neutral'} /> : null}
-                    </Row>
-                  </Pressable>
-                  {items.length === 0 ? (
-                    <Text variant="bodySm" tone="secondary" style={{ marginTop: spacing.sm }}>
-                      No sessions planned today. Rest is part of the plan.
-                    </Text>
-                  ) : null}
-                  <Stack gap={spacing.sm} style={{ marginTop: items.length ? spacing.md : 0 }}>
-                    {items.map((o) => (
-                      <HabitRow key={o.habit.id} occ={o} date={selected} today={today} editable={editable} inset onOpen={(v) => open(o, v)} />
-                    ))}
-                  </Stack>
-                </Card>
-              </View>
-            );
-          })}
 
           {timeGroups.length ? (
             <View style={{ gap: spacing.sm }}>

@@ -221,7 +221,7 @@ export interface CommitmentProgress {
 }
 
 export function commitmentHabits(c: Commitment, habits: Habit[]): Habit[] {
-  return habits.filter((h) => h.commitmentId === c.id);
+  return habits.filter((h) => c.habitIds.includes(h.id));
 }
 
 export function commitmentProgress(

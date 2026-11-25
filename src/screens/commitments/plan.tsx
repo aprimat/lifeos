@@ -53,7 +53,7 @@ export function CommitmentPlan() {
   }
 
   const ob = onboarding === '1' ? '?onboarding=1' : '';
-  const habits = data.habits.filter((h) => h.commitmentId === commitment.id);
+  const habits = data.habits.filter((h) => commitment.habitIds.includes(h.id));
   const exceptions = data.exceptions.filter((e) => e.commitmentId === commitment.id);
   const milestones = data.milestones.filter((m) => m.ownerType === 'commitment' && m.ownerId === commitment.id);
   const end = commitmentEndDate(commitment);
@@ -76,7 +76,7 @@ export function CommitmentPlan() {
   return (
     <Screen
       title="Plan your commitment"
-      back={() => goBack('/goals')}
+      back={() => goBack('/habits')}
       footer={
         isDraft ? (
           <Button

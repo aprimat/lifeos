@@ -3,13 +3,13 @@ import { emptyUserData } from '@/domain/types';
 
 import {
   addException,
+  createCommitment,
   createGoal,
   createHabit,
   rateAutomaticity,
   saveCheckIn,
   saveReflection,
   setLog,
-  startCommitment,
   updateGoal,
 } from './actions';
 import { useStore } from './store';
@@ -33,21 +33,23 @@ export function loadSampleData(): void {
     return seed / 233280;
   };
 
-  // Goal + commitment from the English template.
-  const commitmentId = applyTemplate('english', {
+  // Habits + goal from the English template, and a 30-day commitment on them.
+  const englishIds = applyTemplate('english', {
     answers: { level: 'intermediate', focus: 'speaking' },
     startDate: start,
-    durationDays: 30,
   });
-  startCommitment(commitmentId);
   const data = () => useStore.getState().data;
-  const commitment = data().commitments.find((c) => c.id === commitmentId)!;
-  if (commitment.goalId) {
-    updateGoal(commitment.goalId, {
+  const englishGoal = data().habits.find((h) => h.id === englishIds[0])?.goalIds[0];
+  if (englishGoal) {
+    updateGoal(englishGoal, {
       myWhy: 'I want to speak more confidently at work and connect with people.',
       desiredOutcome: 'Lead a team meeting in English with ease',
     });
   }
+  const commitmentId = createCommitment({ goalId: null, title: '30-day commitment', startDate: start, durationDays: 30, habitIds: englishIds });
+  // Activate in place: startCommitment would move a past start date to today.
+  useStore.getState().mutate((d) => ({ commitments: d.commitments.map((c) => (c.id === commitmentId ? { ...c, status: 'active' as const } : c)) }));
+  const commitment = data().commitments.find((c) => c.id === commitmentId)!;
   addException({ habitId: null, commitmentId, start: addDays(start, 8), end: addDays(start, 9), kind: 'travel', note: 'Conference trip' });
 
   // Standalone habits.
@@ -56,8 +58,7 @@ export function loadSampleData(): void {
     kind: 'build',
     title: 'Morning meditation',
     icon: 'self-improvement',
-    goalId: null,
-    commitmentId: null,
+    goalIds: [],
     startDate: start,
     version: {
       schedule: { type: 'daily' },
@@ -72,8 +73,7 @@ export function loadSampleData(): void {
     kind: 'build',
     title: 'Walk or cardio',
     icon: 'directions-run',
-    goalId: healthGoal,
-    commitmentId: null,
+    goalIds: [healthGoal],
     startDate: start,
     version: {
       schedule: { type: 'flexWeekly', timesPerWeek: 3 },
@@ -88,8 +88,7 @@ export function loadSampleData(): void {
     kind: 'reduce',
     title: 'Social media scrolling',
     icon: 'smartphone',
-    goalId: null,
-    commitmentId: null,
+    goalIds: [],
     startDate: start,
     version: {
       schedule: { type: 'daily' },
@@ -102,7 +101,7 @@ export function loadSampleData(): void {
   });
 
   // Logs for past days (today is left open for logging).
-  const habits = data().habits.filter((h) => h.commitmentId === commitmentId);
+  const habits = data().habits.filter((h) => commitment.habitIds.includes(h.id));
   for (let d = start; d < today; d = addDays(d, 1)) {
     const wd = weekdayIndex(d);
     const travel = d === addDays(start, 8) || d === addDays(start, 9);
