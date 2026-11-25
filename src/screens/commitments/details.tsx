@@ -1,54 +1,35 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { Card, Row, Stack } from '@/components/card';
-import { Group, ListRow, TextField } from '@/components/controls';
 import { Icon } from '@/components/icon';
-import { Banner, EmptyState, Field, Pill, SectionHeader } from '@/components/layout';
+import { Banner, EmptyState, Pill, SectionHeader } from '@/components/layout';
 import { BreakdownBar, BreakdownLegend, ProgressBar, StatusDay } from '@/components/progress';
 import { Screen } from '@/components/screen';
-import { Sheet } from '@/components/sheet';
 import { Text } from '@/components/text';
 import { OBSTACLES } from '@/copy';
-import {
-  endCommitment,
-  extendCommitment,
-  pauseCommitment,
-  resumeCommitment,
-  setMilestoneAchieved,
-  updateCommitment,
-} from '@/data/actions';
+import { resumeCommitment } from '@/data/actions';
 import { commitmentProgress, dailySeries, pct } from '@/domain/analytics';
 import { dayOfMonth, endOfWeek, formatRange, formatShort, startOfWeek, weekdayIndex, weekdayLetter } from '@/domain/dates';
 import type { DayStatus } from '@/domain/schedule';
-import { useCommitment, useData, useGoal, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
+import { useCommitment, useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
 import { HabitRow, recentConsistency } from '../goals/shared';
-import { ConfirmButtons, DurationPicker, durationLabel, statusLabel } from './shared';
+import { durationLabel, pledgeSentence, statusLabel } from './shared';
 
 export function CommitmentDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const commitment = useCommitment(id);
-  const goal = useGoal(commitment?.goalId ?? undefined);
   const data = useData();
   const allHabits = useLiveHabits();
   const idx = useIndex();
   const today = useToday();
   const c = useColors();
-  const [editOpen, setEditOpen] = useState(false);
-  const [archiveOpen, setArchiveOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [duration, setDuration] = useState<number | null>(30);
 
   const progress = commitment ? commitmentProgress(commitment, allHabits, idx, today) : null;
-  const milestones = commitment ? data.milestones.filter((m) => m.ownerType === 'commitment' && m.ownerId === commitment.id) : [];
-
-  // Session-based milestones are recorded automatically by syncMilestones (root layout).
-  const done = progress?.breakdown.done ?? 0;
 
   if (!commitment || !progress) {
     return (
@@ -72,7 +53,7 @@ export function CommitmentDetails() {
     );
   }
 
-  const habits = allHabits.filter((h) => h.commitmentId === commitment.id);
+  const habits = allHabits.filter((h) => commitment.habitIds.includes(h.id));
   const habitIds = new Set(habits.map((h) => h.id));
   const reflections = data.reflections
     .filter((r) => habitIds.has(r.habitId) && (r.note || r.helpNextTime))
@@ -94,15 +75,6 @@ export function CommitmentDetails() {
   return (
     <Screen title="Commitment" back>
       <Stack gap={spacing.xs}>
-        {goal ? (
-          <Pressable accessibilityRole="link" accessibilityLabel={`Goal: ${goal.title}`} onPress={() => router.push(`/goal/${goal.id}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 32 }}>
-            <Icon name="flag" size={16} color={c.primaryText} />
-            <Text variant="labelMd" tone="accent">
-              {goal.title}
-            </Text>
-            <Icon name="chevron-right" size={16} color={c.primaryText} />
-          </Pressable>
-        ) : null}
         <Row justify="space-between" align="flex-start">
           <Text variant="headlineLg" style={{ flex: 1 }} accessibilityRole="header">
             {commitment.title}
@@ -127,8 +99,22 @@ export function CommitmentDetails() {
         />
       ) : null}
       {commitment.status === 'paused' ? (
-        <Banner tone="amber" icon="pause-circle-outline" body="Paused. Paused days are not counted. Resume whenever you're ready." />
+        <Banner
+          tone="amber"
+          icon="pause-circle-outline"
+          body="Paused. Paused days are not counted. Resume whenever you're ready."
+          action={<Button title="Resume" size="sm" icon="play-arrow" onPress={() => resumeCommitment(commitment.id)} style={{ alignSelf: 'flex-start', marginTop: spacing.sm }} />}
+        />
       ) : null}
+
+      <Card inset>
+        <Row align="flex-start">
+          <Icon name="format-quote" size={22} color={c.primaryText} />
+          <Text variant="bodyLg" style={{ flex: 1 }}>
+            {pledgeSentence(progress.totalDays ?? progress.day, null, habits)}
+          </Text>
+        </Row>
+      </Card>
 
       <Card>
         <Stack gap={spacing.md}>
@@ -204,10 +190,10 @@ export function CommitmentDetails() {
       </Stack>
       {isRunning ? (
         <Button
-          title="Add linked habit"
+          title="Add a new habit to it"
           variant="ghost"
           icon="add"
-          onPress={() => router.push(`/habit/new?commitmentId=${commitment.id}${commitment.goalId ? `&goalId=${commitment.goalId}` : ''}`)}
+          onPress={() => router.push(`/habit/new?commitmentId=${commitment.id}`)}
         />
       ) : null}
 
@@ -235,36 +221,6 @@ export function CommitmentDetails() {
         </Stack>
       </Card>
 
-      {milestones.length ? (
-        <>
-          <SectionHeader title="Milestones" right={`${milestones.filter((m) => m.achievedAt).length} of ${milestones.length} reached`} />
-          <Card>
-            <Stack>
-              {milestones.map((m) => (
-                <Pressable
-                  key={m.id}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: !!m.achievedAt }}
-                  accessibilityLabel={m.title}
-                  onPress={() => setMilestoneAchieved(m.id, !m.achievedAt)}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44 }}>
-                  <Icon name={m.achievedAt ? 'check-circle' : 'radio-button-unchecked'} size={22} color={m.achievedAt ? c.sage : c.idle} />
-                  <View style={{ flex: 1 }}>
-                    <Text variant="bodyMd">{m.title}</Text>
-                    <Text variant="labelMd" tone="tertiary">
-                      {m.achievedAt
-                        ? `Reached ${formatShort(m.achievedAt)}`
-                        : m.targetSessions
-                          ? `${Math.min(done, m.targetSessions)} of ${m.targetSessions} sessions`
-                          : 'Tap when reached'}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))}
-            </Stack>
-          </Card>
-        </>
-      ) : null}
 
       {reflections.length ? (
         <>
@@ -294,72 +250,22 @@ export function CommitmentDetails() {
       ) : null}
 
       {isRunning ? (
-        <>
-          <SectionHeader title="Adjust" />
-          <Group>
-            <ListRow
-              icon="tune"
-              title="Edit commitment"
-              subtitle="Name and length"
-              onPress={() => {
-                setTitle(commitment.title);
-                setDuration(commitment.durationDays);
-                setEditOpen(true);
-              }}
-            />
-            <ListRow icon="event-busy" title="Plan exceptions" subtitle="Travel, holidays, rest days" onPress={() => router.push(`/commitment/${commitment.id}/plan`)} />
-            {commitment.status === 'paused' ? (
-              <ListRow icon="play-circle-outline" title="Resume commitment" onPress={() => resumeCommitment(commitment.id)} />
-            ) : (
-              <ListRow icon="pause-circle-outline" title="Pause commitment" subtitle="Paused days aren't counted" onPress={() => pauseCommitment(commitment.id)} />
-            )}
-            {commitment.durationDays ? (
-              <>
-                <ListRow icon="update" title="Extend by 7 days" onPress={() => extendCommitment(commitment.id, 7)} />
-                <ListRow icon="date-range" title="Extend by 30 days" onPress={() => extendCommitment(commitment.id, 30)} />
-              </>
-            ) : null}
-            <ListRow icon="flag" title="Finish and review" onPress={() => router.push(`/commitment/${commitment.id}/complete`)} />
-          </Group>
-          <Button title="Archive or end early" variant="ghost" onPress={() => setArchiveOpen(true)} />
-        </>
+        <Stack>
+          <Button
+            title={reachedEnd ? 'See how it went' : 'End early'}
+            variant={reachedEnd ? 'primary' : 'ghost'}
+            icon={reachedEnd ? 'flag' : undefined}
+            onPress={() => router.push(`/commitment/${commitment.id}/complete`)}
+          />
+          {!reachedEnd ? (
+            <Text variant="bodySm" tone="tertiary" center>
+              Ending early shows how it went so far. Your habits keep going either way.
+            </Text>
+          ) : null}
+        </Stack>
       ) : (
-        <Banner icon="history" body={`This commitment is ${commitment.status}. Its history is kept.`} />
+        <Banner icon="history" body="This commitment is over. Its history is kept, and its habits carried on." />
       )}
-
-      <Sheet visible={editOpen} onClose={() => setEditOpen(false)} title="Edit commitment">
-        <Field label="Name">
-          <TextField value={title} onChangeText={setTitle} maxLength={80} accessibilityLabel="Commitment name" />
-        </Field>
-        <Field label="Duration">
-          <DurationPicker value={duration} onChange={setDuration} />
-        </Field>
-        <Button
-          title="Save"
-          disabled={!title.trim()}
-          onPress={() => {
-            updateCommitment(commitment.id, { title: title.trim(), durationDays: duration });
-            setEditOpen(false);
-          }}
-        />
-      </Sheet>
-
-      <Sheet visible={archiveOpen} onClose={() => setArchiveOpen(false)} title="End this commitment early?">
-        <Text variant="bodyMd" tone="secondary">
-          Your history and progress are kept. Linked habits stop appearing on Today. The goal stays active.
-        </Text>
-        <ConfirmButtons
-          confirm={{
-            title: 'Archive commitment',
-            danger: true,
-            onPress: () => {
-              endCommitment(commitment.id, 'archived');
-              setArchiveOpen(false);
-            },
-          }}
-          cancel={() => setArchiveOpen(false)}
-        />
-      </Sheet>
     </Screen>
   );
 }

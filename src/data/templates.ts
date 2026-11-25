@@ -1,6 +1,6 @@
 import type { FocusArea, HabitKind, HabitVersion, ID, ISODate } from '@/domain/types';
 
-import { addMilestone, createCommitment, createGoal, createHabit } from './actions';
+import { addGoalSign, createGoal, createHabit } from './actions';
 
 /** Starter templates (IMPLEMENTATION_PLAN.md §4). Starting points only — everything is editable. */
 
@@ -30,7 +30,8 @@ export interface Template {
   commitmentTitle: string;
   durationDays: number;
   questions: TemplateQuestion[];
-  milestones: { title: string; targetSessions: number }[];
+  /** Suggested signs that the goal is achieved (plan v1.4: a goal plus signs, no sub-goals). */
+  goalSigns: string[];
   habits(answers: Record<string, string>): TemplateHabit[];
 }
 
@@ -87,9 +88,10 @@ export const TEMPLATES: Template[] = [
         ],
       },
     ],
-    milestones: [
-      { title: 'First 10 practice sessions', targetSessions: 10 },
-      { title: '45 practice sessions — the halfway mark', targetSessions: 45 },
+    goalSigns: [
+      'I can hold a 10-minute conversation without freezing',
+      'I understand most of a podcast or film without subtitles',
+      'I speak up in meetings in English',
     ],
     habits: (a) => {
       const beginner = a.level === 'beginner';
@@ -158,7 +160,11 @@ export const TEMPLATES: Template[] = [
         ],
       },
     ],
-    milestones: [{ title: 'First 20 focused sessions', targetSessions: 20 }],
+    goalSigns: [
+      'I finish my most important task most days',
+      'I can work an hour without checking my phone',
+      'My evenings are free of catch-up work',
+    ],
     habits: (a) => [
       {
         key: 'deepwork',
@@ -206,7 +212,11 @@ export const TEMPLATES: Template[] = [
         ],
       },
     ],
-    milestones: [{ title: '40 sessions — two calm weeks', targetSessions: 40 }],
+    goalSigns: [
+      'I fall asleep within 20 minutes most nights',
+      'I wake up rested most mornings',
+      'I keep the same bedtime on weekdays',
+    ],
     habits: (a) => [
       {
         key: 'screens',
@@ -253,7 +263,11 @@ export const TEMPLATES: Template[] = [
         ],
       },
     ],
-    milestones: [{ title: '20 sessions — ten quiet mornings', targetSessions: 20 }],
+    goalSigns: [
+      'I notice stress before it builds up',
+      'I can sit quietly for 10 minutes',
+      'I feel calmer during the week',
+    ],
     habits: (a) => [
       {
         key: 'stillness',
@@ -293,7 +307,11 @@ export const TEMPLATES: Template[] = [
         ],
       },
     ],
-    milestones: [{ title: '40 movement sessions', targetSessions: 40 }],
+    goalSigns: [
+      'I can walk 10k steps without feeling tired',
+      'I can touch my toes',
+      'I have steady energy through the afternoon',
+    ],
     habits: (a) => [
       {
         key: 'mobility',
@@ -346,7 +364,11 @@ export const TEMPLATES: Template[] = [
         ],
       },
     ],
-    milestones: [],
+    goalSigns: [
+      'My daily screen time is under 2 hours',
+      'I don\'t reach for my phone first thing in the morning',
+      'I read a book again',
+    ],
     habits: (a) => {
       const baseline = Number(a.baseline ?? 90);
       const finalTarget = Math.min(Number(a.target ?? 30), baseline);
@@ -381,44 +403,43 @@ export function getTemplate(id: string): Template | undefined {
 }
 
 /**
- * Creates (or reuses) a goal, a DRAFT commitment and its habits from a template.
- * The user reviews it on the commitment review screen before starting.
+ * Adds a template's habits (plan v1.4: habits are the core). Optionally links them to the
+ * template's goal (created, or an existing one). No commitment is made: that's a separate choice.
+ * Returns the new habit ids.
  */
 export function applyTemplate(
   templateId: string,
   opts: {
     answers: Record<string, string>;
+    /** Link to this goal; `undefined` creates the template's goal; `null` links no goal. */
     goalId?: ID | null;
     startDate: ISODate;
-    durationDays?: number | null;
     includedKeys?: string[];
+    /** Signs for a newly created goal; defaults to the template's suggestions. */
+    goalSigns?: string[];
   },
-): ID {
+): ID[] {
   const t = getTemplate(templateId);
   if (!t) throw new Error(`Unknown template ${templateId}`);
-  const goalId = opts.goalId ?? createGoal({ title: t.goalTitle, focusArea: t.focusArea, myWhy: null, desiredOutcome: null });
-  const commitmentId = createCommitment({
-    goalId,
-    title: t.commitmentTitle,
-    startDate: opts.startDate,
-    durationDays: opts.durationDays === undefined ? t.durationDays : opts.durationDays,
-    templateId: t.id,
-  });
+  let goalId = opts.goalId ?? null;
+  if (opts.goalId === undefined) {
+    goalId = createGoal({ title: t.goalTitle, focusArea: t.focusArea, myWhy: null, desiredOutcome: null });
+    for (const title of opts.goalSigns ?? t.goalSigns) addGoalSign(goalId, title);
+  }
+  const ids: ID[] = [];
   for (const h of t.habits(opts.answers)) {
     const included = opts.includedKeys ? opts.includedKeys.includes(h.key) : !h.optional;
     if (!included) continue;
-    createHabit({
-      kind: h.kind,
-      title: h.title,
-      icon: h.icon,
-      goalId,
-      commitmentId,
-      startDate: opts.startDate,
-      version: h.version,
-    });
+    ids.push(
+      createHabit({
+        kind: h.kind,
+        title: h.title,
+        icon: h.icon,
+        goalIds: goalId ? [goalId] : [],
+        startDate: opts.startDate,
+        version: h.version,
+      }),
+    );
   }
-  for (const m of t.milestones) {
-    addMilestone({ ownerType: 'commitment', ownerId: commitmentId, title: m.title, targetSessions: m.targetSessions });
-  }
-  return commitmentId;
+  return ids;
 }

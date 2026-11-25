@@ -57,7 +57,8 @@ export const DEFAULT_SETTINGS: Settings = {
   biometricLock: false,
 };
 
-export type GoalStatus = 'active' | 'archived' | 'concluded';
+/** `concluded` is from older data; new goals are marked `achieved`. */
+export type GoalStatus = 'active' | 'achieved' | 'archived' | 'concluded';
 
 export interface Goal extends Entity {
   title: string;
@@ -65,6 +66,8 @@ export interface Goal extends Entity {
   myWhy: string | null;
   desiredOutcome: string | null;
   status: GoalStatus;
+  /** Set when the user marks the goal achieved. */
+  achievedAt?: ISODate | null;
 }
 
 export interface Milestone extends Entity {
@@ -87,6 +90,8 @@ export interface DateRange {
 
 export interface Commitment extends Entity {
   goalId: ID | null;
+  /** The habits this commitment covers. It points at them; it never owns them. */
+  habitIds: ID[];
   title: string;
   startDate: ISODate;
   /** `null` = ongoing (no fixed end date). */
@@ -149,8 +154,8 @@ export interface Habit extends Entity {
   kind: HabitKind;
   title: string;
   icon: string;
-  goalId: ID | null;
-  commitmentId: ID | null;
+  /** Goals this habit supports (zero or more). */
+  goalIds: ID[];
   status: HabitStatus;
   startDate: ISODate;
   archivedAt: ISODate | null;
@@ -250,8 +255,10 @@ export interface CommitmentReview extends Entity {
 }
 
 /** Everything stored for one user. */
+export const SCHEMA_VERSION = 2;
+
 export interface UserData {
-  schemaVersion: 1;
+  schemaVersion: typeof SCHEMA_VERSION;
   settings: Settings;
   goals: Goal[];
   milestones: Milestone[];
@@ -269,7 +276,7 @@ export interface UserData {
 
 export function emptyUserData(): UserData {
   return {
-    schemaVersion: 1,
+    schemaVersion: SCHEMA_VERSION,
     settings: { ...DEFAULT_SETTINGS },
     goals: [],
     milestones: [],

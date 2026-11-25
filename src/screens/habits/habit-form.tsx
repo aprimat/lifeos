@@ -24,6 +24,7 @@ import { Text } from '@/components/text';
 import { DEFAULT_TRIGGERS, EXCEPTION_KINDS, REDUCE_MODES, SAFETY, TIME_OF_DAY } from '@/copy';
 import {
   addException,
+  createGoal,
   completeOnboarding,
   createHabit,
   removeException,
@@ -64,7 +65,7 @@ interface FormState {
   kind: HabitKind;
   title: string;
   icon: string;
-  goalId: string | null;
+  goalIds: string[];
   // build
   trackingType: TrackingType;
   target: number;
@@ -99,7 +100,7 @@ function initialState(habit: Habit | undefined, kind: HabitKind, goalId: string 
     kind,
     title: '',
     icon: kind === 'reduce' ? 'do-not-disturb-on' : 'self-improvement',
-    goalId,
+    goalIds: goalId ? [goalId] : [],
     trackingType: 'duration',
     target: 10,
     unit: 'min',
@@ -130,7 +131,7 @@ function initialState(habit: Habit | undefined, kind: HabitKind, goalId: string 
     kind: habit.kind,
     title: habit.title,
     icon: habit.icon,
-    goalId: habit.goalId,
+    goalIds: habit.goalIds,
     trackingType: v.build?.trackingType ?? base.trackingType,
     target: v.build?.target ?? base.target,
     unit: v.build?.unit ?? base.unit,
@@ -219,13 +220,16 @@ export interface HabitFormProps {
   commitmentId?: string | null;
   goalId?: string | null;
   onboarding?: boolean;
+  /** Go back to the previous screen after creating (e.g. to "Make a commitment"). */
+  returnAfterSave?: boolean;
 }
 
-export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId = null, onboarding }: HabitFormProps) {
+export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId = null, onboarding, returnAfterSave }: HabitFormProps) {
   const editing = !!habit;
   const today = useToday();
   const c = useColors();
-  const linkedCommitmentId = habit?.commitmentId ?? commitmentId;
+  // Only a new habit can be added to a commitment from here; an existing one keeps its links.
+  const linkedCommitmentId = habit ? null : commitmentId;
   const commitment = useCommitment(linkedCommitmentId ?? undefined);
   const goals = useStore((s) => s.data.goals);
   const settings = useStore((s) => s.data.settings);
@@ -253,9 +257,19 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
   const alcohol = f.kind === 'reduce' && isAlcohol(f.title);
   const needsSafety = sensitive && !habit?.safetyAcknowledged;
   const totalSteps = needsSafety ? 3 : 2;
-  const goal = goals.find((g) => g.id === f.goalId);
-  const activeGoals = goals.filter((g) => g.status === 'active');
-  const commitmentLocked = !!linkedCommitmentId;
+  const linkedGoals = goals.filter((g) => f.goalIds.includes(g.id));
+  // Offer active goals, plus any this habit already supports (e.g. one marked achieved).
+  const goalChoices = goals.filter((g) => g.status === 'active' || f.goalIds.includes(g.id));
+  const [newGoal, setNewGoal] = useState('');
+  const toggleGoal = (id: string) => set({ goalIds: f.goalIds.includes(id) ? f.goalIds.filter((x) => x !== id) : [...f.goalIds, id] });
+  const addGoal = () => {
+    const title = newGoal.trim();
+    if (!title) return;
+    const existing = goals.find((g) => g.status === 'active' && g.title.toLowerCase() === title.toLowerCase());
+    const gid = existing?.id ?? createGoal({ title, focusArea: null, myWhy: null, desiredOutcome: null });
+    if (!f.goalIds.includes(gid)) set({ goalIds: [...f.goalIds, gid] });
+    setNewGoal('');
+  };
 
   const startDate: ISODate = commitment
     ? commitment.status === 'draft'
@@ -299,7 +313,7 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
         {
           title: f.title.trim(),
           icon: f.icon,
-          goalId: commitmentLocked ? habit.goalId : f.goalId,
+          goalIds: f.goalIds,
           safetyAcknowledged: habit.safetyAcknowledged || acknowledged,
         },
         changed ? version : undefined,
@@ -311,7 +325,7 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
       kind: f.kind,
       title: f.title.trim(),
       icon: f.icon,
-      goalId: f.goalId,
+      goalIds: f.goalIds,
       commitmentId: linkedCommitmentId,
       startDate,
       version,
@@ -319,7 +333,9 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
     });
     for (const e of drafts) addException({ habitId: id, commitmentId: null, start: e.start, end: e.end, kind: e.kind });
     if (linkedCommitmentId) {
-      goBack(`/commitment/${linkedCommitmentId}/plan`);
+      goBack(commitment?.status === 'draft' ? `/commitment/${linkedCommitmentId}/plan` : `/commitment/${linkedCommitmentId}`);
+    } else if (returnAfterSave) {
+      goBack('/habits');
     } else if (onboarding) {
       await completeOnboarding();
       router.replace('/today');
@@ -407,22 +423,21 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
                 </View>
               </Row>
             </Card>
-          ) : (
-            <Card onPress={() => setGoalSheet(true)} accessibilityLabel="Link to a goal">
-              <Row gap={spacing.md}>
-                <Icon name="flag" color={goal ? c.primaryText : c.textTertiary} />
-                <View style={{ flex: 1 }}>
-                  <Text variant="labelSm" tone="tertiary" uppercase>
-                    Linked goal
-                  </Text>
-                  <Text variant="bodyMd" tone={goal ? 'primary' : 'secondary'}>
-                    {goal ? goal.title : 'Standalone habit (optional goal)'}
-                  </Text>
-                </View>
-                <Icon name="edit" size={18} />
-              </Row>
-            </Card>
-          )}
+          ) : null}
+          <Card onPress={() => setGoalSheet(true)} accessibilityLabel="Goals this habit supports">
+            <Row gap={spacing.md}>
+              <Icon name="flag" color={linkedGoals.length ? c.primaryText : c.textTertiary} />
+              <View style={{ flex: 1 }}>
+                <Text variant="labelSm" tone="tertiary" uppercase>
+                  {linkedGoals.length > 1 ? 'Goals' : 'Goal'} (optional)
+                </Text>
+                <Text variant="bodyMd" tone={linkedGoals.length ? 'primary' : 'secondary'}>
+                  {linkedGoals.length ? linkedGoals.map((g) => g.title).join(', ') : 'No goal. Add one if this habit is for something bigger'}
+                </Text>
+              </View>
+              <Icon name="edit" size={18} />
+            </Row>
+          </Card>
 
           <Field label={f.kind === 'build' ? 'Habit name' : 'Behaviour to reduce'}>
             <TextField
@@ -438,7 +453,7 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
                 }
                 set(patch);
               }}
-              placeholder={f.kind === 'build' ? 'e.g. Practice English speaking' : 'e.g. Social media scrolling'}
+              placeholder={f.kind === 'build' ? 'e.g. Read 20 min, Walk 8k steps' : 'e.g. Social media scrolling'}
               maxLength={60}
               accessibilityLabel={f.kind === 'build' ? 'Habit name' : 'Behaviour to reduce'}
               testID="habit-title"
@@ -695,34 +710,36 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
         }}
       />
 
-      <Sheet visible={goalSheet} onClose={() => setGoalSheet(false)} title="Link to a goal">
-        <SelectableCard
-          title="No goal"
-          description="Keep this as a standalone habit."
-          icon="radio-button-unchecked"
-          selected={!f.goalId}
-          onPress={() => {
-            set({ goalId: null });
-            setGoalSheet(false);
-          }}
-        />
-        {activeGoals.map((g) => (
+      <Sheet visible={goalSheet} onClose={() => setGoalSheet(false)} title="Goals this habit supports">
+        <Text variant="bodySm" tone="secondary">
+          Optional. A goal is a result you want, e.g. Improve health or Get promoted. Pick as many as fit.
+        </Text>
+        {goalChoices.map((g) => (
           <SelectableCard
             key={g.id}
             title={g.title}
+            description={g.status === 'active' ? undefined : 'Achieved'}
             icon="flag"
-            selected={f.goalId === g.id}
-            onPress={() => {
-              set({ goalId: g.id });
-              setGoalSheet(false);
-            }}
+            multiple
+            selected={f.goalIds.includes(g.id)}
+            onPress={() => toggleGoal(g.id)}
           />
         ))}
-        {activeGoals.length === 0 ? (
-          <Text variant="bodySm" tone="tertiary">
-            You haven't created any goals yet. Habits work on their own too.
-          </Text>
-        ) : null}
+        <Row gap={spacing.sm}>
+          <View style={{ flex: 1 }}>
+            <TextField
+              value={newGoal}
+              onChangeText={setNewGoal}
+              placeholder="New goal, e.g. Get promoted"
+              maxLength={80}
+              accessibilityLabel="New goal"
+              returnKeyType="done"
+              onSubmitEditing={addGoal}
+            />
+          </View>
+          <Button title="Add" size="sm" variant="secondary" icon="add" disabled={!newGoal.trim()} onPress={addGoal} />
+        </Row>
+        <Button title="Done" onPress={() => setGoalSheet(false)} />
       </Sheet>
     </Screen>
   );

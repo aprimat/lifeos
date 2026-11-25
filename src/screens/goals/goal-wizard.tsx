@@ -10,7 +10,7 @@ import { Banner, Field, PageTitle, Pill, StepHeader } from '@/components/layout'
 import { goBack, Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { FOCUS_AREAS, focusLabel } from '@/copy';
-import { addMilestone, completeOnboarding, createGoal } from '@/data/actions';
+import { addGoalSign, completeOnboarding, createGoal } from '@/data/actions';
 import type { FocusArea } from '@/domain/types';
 import { useColors } from '@/hooks/use-theme';
 import { radius, spacing } from '@/theme/tokens';
@@ -40,7 +40,8 @@ export function GoalWizard() {
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
   const [focusArea, setFocusArea] = useState<FocusArea | null>(null);
-  const [outcome, setOutcome] = useState('');
+  const [signs, setSigns] = useState<string[]>([]);
+  const [signDraft, setSignDraft] = useState('');
   const [why, setWhy] = useState('');
   const [next, setNext] = useState<Next>(params.next === 'habit' ? 'habit' : params.next === 'commitment' ? 'commitment' : 'commitment');
 
@@ -51,9 +52,10 @@ export function GoalWizard() {
       title: title.trim(),
       focusArea,
       myWhy: why.trim() || null,
-      desiredOutcome: outcome.trim() || null,
+      desiredOutcome: null,
     });
-    if (outcome.trim()) addMilestone({ ownerType: 'goal', ownerId: id, title: outcome.trim() });
+    // A typed sign that wasn't added with "Add" still counts.
+    for (const s of [...signs, signDraft].map((x) => x.trim()).filter(Boolean)) addGoalSign(id, s);
     if (next === 'commitment') router.replace(`/commitment/new?goalId=${id}${ob}`);
     else if (next === 'habit') router.replace(`/habit/new?goalId=${id}${ob}`);
     else if (onboarding) {
@@ -62,7 +64,14 @@ export function GoalWizard() {
     } else router.replace(`/goal/${id}`);
   };
 
-  const back = () => (step > 1 ? setStep(step - 1) : goBack('/goals'));
+  const addSign = () => {
+    const s = signDraft.trim();
+    if (!s) return;
+    setSigns((cur) => [...cur, s]);
+    setSignDraft('');
+  };
+
+  const back = () => (step > 1 ? setStep(step - 1) : goBack('/habits'));
 
   const footer =
     step === 1 ? (
@@ -104,14 +113,34 @@ export function GoalWizard() {
               onChange={(v) => setFocusArea((v as FocusArea) === focusArea ? null : (v as FocusArea))}
             />
           </Field>
-          <Field label="Desired outcome or milestone" optional hint="A marker you'd like to recognise along the way.">
-            <TextField
-              value={outcome}
-              onChangeText={setOutcome}
-              placeholder="e.g. Speak calmly in weekly team meetings"
-              maxLength={120}
-              accessibilityLabel="Desired outcome or milestone"
-            />
+          <Field label="How will you know it's achieved?" optional hint="A few signs you'll tick when they come true. No sub-goals needed.">
+            <Stack gap={spacing.sm}>
+              {signs.map((s, i) => (
+                <Row key={`${i}-${s}`} gap={spacing.sm}>
+                  <Icon name="check-box-outline-blank" size={20} color={c.textTertiary} />
+                  <Text variant="bodyMd" style={{ flex: 1 }}>
+                    {s}
+                  </Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel={`Remove sign ${s}`} hitSlop={8} onPress={() => setSigns((cur) => cur.filter((_, j) => j !== i))} style={{ padding: spacing.xs }}>
+                    <Icon name="close" size={18} color={c.textTertiary} />
+                  </Pressable>
+                </Row>
+              ))}
+              <Row gap={spacing.sm}>
+                <View style={{ flex: 1 }}>
+                  <TextField
+                    value={signDraft}
+                    onChangeText={setSignDraft}
+                    placeholder={signs.length ? 'Another sign' : 'e.g. Lost 9 kg'}
+                    maxLength={100}
+                    accessibilityLabel="Sign it's achieved"
+                    returnKeyType="done"
+                    onSubmitEditing={addSign}
+                  />
+                </View>
+                <Button title="Add" size="sm" variant="secondary" icon="add" disabled={!signDraft.trim()} onPress={addSign} />
+              </Row>
+            </Stack>
           </Field>
           <Card>
             <Stack>

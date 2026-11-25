@@ -86,3 +86,77 @@ Run on one iOS and one Android phone, in light and dark mode. Tick each step.
 
 ## 12. Which update is running (PR #4)
 - [ ] On the cable-installed app, fully close LifeOS and reopen it, then open Profile & settings → About → **Version** → under "1.0.0" it reads "Update of <date>, <time>" matching the latest update (Expo dashboard). Right after a fresh `npm run release:ios`, before any update, it reads "Built-in version".
+
+## 13. v1.4 step 1: habits no longer belong to commitments (PR: v1.4)
+- [ ] **Nothing lost.** Install the update with your existing data → Today shows the same habits as before, and each habit's history and Progress numbers are unchanged.
+- [ ] **Old finished commitment.** A habit that belonged to a commitment you'd already finished doesn't come back on Today (it shows as archived in the goal's history).
+- [ ] **Ran past its end.** A commitment that reached its end date without you finishing it: its habits show "Paused" on their details screen. Open the commitment → Finish and review → **Finish** → Confirm → the habits are back on Today from today, and the days in between aren't counted as missed.
+- [ ] **Finish keeps habits.** Commitment details → Finish and review → **Finish** → Confirm → its habits stay on Today tomorrow. "Keep the habits going" is no longer offered (it's what Finish does now).
+- [ ] **Renew, no copies.** Finish and review → **Renew** → Confirm → Goals → the goal lists each habit once (no duplicate copies), and the habit's history continues on the same habit.
+- [ ] **Pause together.** Commitment details → Pause → its habits leave Today. Resume → they come back. A habit you had paused yourself before stays paused.
+- [ ] **End early wording.** Commitment details → Archive or end early → the sheet says your habits keep going on Today.
+
+## 14. v1.4 step 2: Habits tab replaces Goals (PR: v1.4)
+- [ ] **Bottom bar.** It reads **Today · Habits · Progress**. Habits has a repeat icon.
+- [ ] **Grouped by goal.** Habits tab → each goal is a header with its habits under it; habits without a goal are under **No goal** at the bottom. A goal with no habits shows "No habits yet. Add one" → tapping it opens New habit with that goal already linked.
+- [ ] **Paused.** A paused habit shows "Paused" on the right instead of a percentage.
+- [ ] **Buttons.** **New habit** opens the habit form. **Make a commitment** opens the commitment flow. While a commitment is running, the button is replaced by a "Current commitment" card (Day X of Y, %); tapping it opens the commitment.
+- [ ] **Goal screen.** Tap a goal header → you see "Last 4 weeks" (% and "N of M planned sessions done"), My why, the habits for this goal and **Add a habit**. There are no milestones or commitment sections any more.
+- [ ] **Achieved.** Goal → **Mark as achieved** → **Yes, I achieved it** → the goal shows "Achieved" with today's date and a "You reached this goal" note. Back on Habits, the goal still groups its habits with an "Achieved" pill. **Not achieved yet: reopen** makes it active again.
+- [ ] **Archived list.** Archive a goal → its habits move to **No goal**. At the bottom, **Achieved and archived (N)** expands to list achieved/archived goals and archived habits; tapping one opens it.
+- [ ] **Empty start.** On a new account the Habits tab asks "What do you want to do regularly?" with **New habit** and **Start from a template**.
+
+## 15. v1.4 step 3: several goals per habit, create a goal in the form (PR: v1.4)
+- [ ] **Placeholder.** Habits → New habit → the name field suggests "e.g. Read 20 min, Walk 8k steps". The goal row reads "Goal (optional) · No goal. Add one if this habit is for something bigger".
+- [ ] **Pick several.** Tap the goal row → tick two goals → Done → the row lists both names. Save → on the Habits tab the habit appears under both goals.
+- [ ] **Create inline.** In the goal sheet, type "Get promoted" → Add → it appears ticked in the list. Done → Save → Habits tab has a "Get promoted" group with this habit. Typing the name of a goal that already exists ticks that goal instead of making a duplicate.
+- [ ] **Untick.** Edit the habit → goal row → untick one goal → Done → Save → it's gone from that goal's group only.
+- [ ] **Habit details.** Open the habit → its goals show as small flag chips above the title; tapping one opens the goal. While a commitment that includes it is running, a "Commitment" card shows above them.
+
+## 16. v1.4 step 4: one simple commitment (PR: v1.4)
+- [ ] **Make one.** Habits → **Make a commitment** → tick two habits → pick **30 days** → the quote reads like "For 30 days I'll walk every day and meditate 3× a week." → **I commit** → the commitment opens at Day 1 of 30.
+- [ ] **New habit from there.** Make a commitment → **New habit** → fill it in → Save → you're back on Make a commitment with the new habit already ticked.
+- [ ] **Until a date.** Make a commitment → **Until a date** → tap a day in the calendar → it's highlighted as the last day, and the quote says "For N days…" with the right count.
+- [ ] **One at a time.** With one running, the Habits tab shows the "Current commitment" card instead of the button. Opening /commitment/new (e.g. from an old goal screen link) says "One commitment at a time" with **Open current commitment**.
+- [ ] **Today line.** Today shows one tinted line under the week strip, "Day X of 30 · N% kept"; tapping it opens the commitment. The habits themselves appear in the normal Daily habits list (no separate commitment box).
+- [ ] **Commitment screen.** It shows the quote, progress, habits, this week and **End early**. No pause, extend, edit, milestones or goal link. **Add a new habit to it** opens the habit form and returns to the commitment after Save.
+- [ ] **End early.** Tap **End early** → "Looking back" with sessions done, time and rest days → pick **Done** → Confirm next step → Habits tab; the habits are still on Today tomorrow.
+- [ ] **Renew / Change.** On the look-back screen: **Renew** starts the same habits again for the same length (tomorrow if the old one still covered today). **Change** opens Make a commitment with the same habits ticked, so you can adjust and commit again.
+- [ ] **End date reached.** When the last day has passed, Today shows "<name> has reached its end date … Your habits keep going", and the commitment screen shows **See how it went**.
+
+## 17. v1.4 step 5: monthly report (PR: v1.4)
+- [ ] **Entry.** Progress tab → near the top, a card "Your <last month> report" → tap → "Monthly report" for last month. **This month so far** on the same card opens the current month.
+- [ ] **What went well first.** The report starts with "What went well": the best habit ("Walk went best: 18 of 20 (90%)"), sessions done and minutes, smaller versions ("Showing up still counts"), rest days, and "Up from N% last month" when it improved.
+- [ ] **Success rate.** Below it: the overall %, "N of M planned sessions done", and the coloured breakdown bar.
+- [ ] **Each habit.** Every habit with something planned is listed with its %, best first. Tap one → its progress screen.
+- [ ] **One thing to adjust.** If a habit had at least 3 planned sessions and under half done, a card names it with a short suggestion and **Adjust this habit** (opens Edit habit).
+- [ ] **Months.** The left arrow goes to earlier months; on the current month there's no right arrow. A quiet month says "Nothing logged yet in this period…".
+- [ ] **Commitment look back uses it.** Commitment → End early (or See how it went) → the same "What went well / Success rate / Each habit" report appears, followed by Reflection and What comes next.
+- [ ] **No milestones.** The Progress tab no longer has a "Milestones reached" section.
+
+## 18. v1.4 step 6: why you missed (PR: v1.4)
+- [ ] **Note a reason.** Today → long-press a habit → **Skip** → in the reflection that follows pick "Not enough time" → Save. Do the same on another day (or another habit).
+- [ ] **Progress card.** Progress tab (This week / Last 4 weeks / This month) → below the summary a "Why you missed" card reads e.g. "2 of 3 misses: not enough time." with an idea to try ("On full days, the minimum version still counts.").
+- [ ] **Pattern.** If most misses were on evening habits, it adds "Mostly in the evening (N of M)." If most fell on one weekday, "Mostly on Mondays…".
+- [ ] **No reasons yet.** With misses but no reasons noted, it says "N misses, no reason noted yet." and suggests tapping Reflect after a miss.
+- [ ] **No misses.** With nothing missed in the range, the card doesn't appear.
+- [ ] **In reports.** The monthly report and a commitment's look back show the same card above "One thing to adjust".
+- [ ] **Today isn't a miss.** Something planned today and not yet logged isn't counted.
+
+## 19. v1.4 step 7: simpler onboarding and templates (PR: v1.4)
+- [ ] **One question.** Sign up with a new account → the first screen is "What do you want to do regularly?" with **My own habit**, **Pick from templates**, **Create my first habit** and **Decide later**. No focus-area screen comes first.
+- [ ] **First habit.** **Create my first habit** → fill in a name → Save → you land on Today with that habit; onboarding doesn't show again after reopening the app.
+- [ ] **Template.** Welcome → **Pick from templates** → choose one → answer its questions, tick optional habits → "Is this for a bigger goal?" is ticked → **Add these N habits** → Today shows them from today; Habits tab groups them under the template's goal. No commitment was created.
+- [ ] **Template without goal.** Same, but untick "Is this for a bigger goal?" → the habits are under **No goal**.
+- [ ] **Templates list.** The cards show focus area and number of habits (no "30 days" length).
+- [ ] **Old draft.** If you have a commitment draft from before, opening it still works; with another commitment running, **Start commitment** is disabled with "One commitment at a time" text.
+
+## 20. v1.4: a goal and the signs it's achieved (PR: v1.4)
+- [ ] **New goal with signs.** Habits tab → **Add a goal** → type "Be healthy" → under "How will you know it's achieved?" type "Lost 9 kg" → **Add** → type "Eat healthy" → **Add** → type "Got flexible" (don't tap Add) → Continue → Skip → **Decide later** → Save goal → the goal page shows "Signs it's achieved" with all three signs, "0 of 3".
+- [ ] **Remove before saving.** In the new-goal form, add a sign, then tap its **✕** → it's gone.
+- [ ] **Tick and untick.** On the goal page tap "Lost 9 kg" → box ticked, "Since <today>" under it, count "1 of 3". Tap again → unticked, "0 of 3".
+- [ ] **Last sign asks.** Tick all three → a sheet "All signs are there" asks to mark the goal achieved → **Not yet** → the goal stays Active. Untick one and tick it again → the sheet comes back → **Yes, I achieved it** → "You reached this goal" banner.
+- [ ] **Achieve without all signs.** On another goal with signs not all ticked → **Mark as achieved** → the sheet says "N of M signs ticked. That's fine…" → Yes → achieved.
+- [ ] **Add, rename, delete.** Goal page → **Add a sign** → type → Save → it appears. Tap **⋯** next to a sign → change the text → Save → renamed. **⋯** → **Delete sign** → gone.
+- [ ] **Habits tab.** A goal with signs shows a "1 of 3 signs" pill next to its name (green when all are ticked); a goal without signs shows no pill.
+- [ ] **Template signs.** Pick from templates → any template with "Is this for a bigger goal?" ticked → Add → open the goal → it has 3 suggested signs, all unticked. With the box unticked, no goal and no signs are created.

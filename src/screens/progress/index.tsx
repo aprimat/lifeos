@@ -25,6 +25,7 @@ import {
   eachDay,
   endOfMonth,
   endOfWeek,
+  formatMonth,
   formatRange,
   formatShort,
   minDate,
@@ -34,11 +35,13 @@ import {
   weekdayIndex,
   weekdayLetter,
 } from '@/domain/dates';
+import { missSummary } from '@/domain/misses';
 import { occurrence } from '@/domain/schedule';
 import { useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
+import { MissCard } from './miss-card';
 import { RhythmChart, type RhythmColumn } from './rhythm-chart';
 
 type Range = 'week' | 'weeks4' | 'month';
@@ -58,6 +61,7 @@ export function ProgressScreen() {
   }, [range, today]);
 
   const breakdown = useMemo(() => habitsBreakdown(habits, start, end, idx, today), [habits, start, end, idx, today]);
+  const misses = useMemo(() => missSummary(habits, data.reflections, start, end, idx, today), [habits, data.reflections, start, end, idx, today]);
   const minutes = useMemo(() => minutesInRange(habits, start, minDate(end, today), idx), [habits, start, end, idx, today]);
 
   const columns = useMemo<RhythmColumn[]>(() => {
@@ -113,10 +117,6 @@ export function ProgressScreen() {
     [visibleHabits, today, idx],
   );
 
-  const milestones = useMemo(
-    () => data.milestones.filter((m) => m.achievedAt).sort((a, b) => (b.achievedAt ?? '').localeCompare(a.achievedAt ?? '')).slice(0, 5),
-    [data.milestones],
-  );
   const reflections = useMemo(() => [...data.reflections].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3), [data.reflections]);
   const reviews = useMemo(
     () => data.weeklyReviews.filter((r) => r.completedAt).sort((a, b) => b.weekStart.localeCompare(a.weekStart)).slice(0, 3),
@@ -124,6 +124,7 @@ export function ProgressScreen() {
   );
 
   const lastWeek = addDays(startOfWeek(today), -7);
+  const lastMonth = startOfMonth(addDays(startOfMonth(today), -1));
   const lastWeekReviewed = data.weeklyReviews.some((r) => r.weekStart === lastWeek && r.completedAt);
   const hadPlanLastWeek = habits.some((h) => h.startDate <= addDays(lastWeek, 6));
   const habitTitle = (id: string) => data.habits.find((h) => h.id === id)?.title ?? 'Habit';
@@ -184,6 +185,24 @@ export function ProgressScreen() {
         </Card>
       ) : null}
 
+      <Card onPress={() => router.push(`/report?month=${lastMonth}`)} accessibilityLabel={`Open the report for ${formatMonth(lastMonth)}`}>
+        <Row gap={spacing.md}>
+          <Icon name="calendar-month" size={22} color={c.primaryText} />
+          <View style={{ flex: 1 }}>
+            <Text variant="labelLg">Your {formatMonth(lastMonth).split(' ')[0]} report</Text>
+            <Text variant="bodySm" tone="secondary">
+              What went well, each habit&apos;s success rate, one thing to adjust
+            </Text>
+          </View>
+          <Icon name="chevron-right" size={20} color={c.textTertiary} />
+        </Row>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/report')} style={{ paddingTop: spacing.sm }}>
+          <Text variant="labelMd" tone="accent">
+            This month so far
+          </Text>
+        </Pressable>
+      </Card>
+
       <Card>
         <Row justify="space-between" align="flex-start">
           <View style={{ flex: 1, gap: 2 }}>
@@ -240,6 +259,8 @@ export function ProgressScreen() {
         </Card>
       </Row>
       <Banner icon="bedtime" body="Rest is recorded as rest, not absence." />
+
+      <MissCard summary={misses} />
 
       <SectionHeader title={range === 'week' ? 'Daily rhythm' : 'Weekly rhythm'} icon="bar-chart" />
       <Card>
@@ -409,26 +430,6 @@ export function ProgressScreen() {
         </>
       ) : null}
 
-      {milestones.length ? (
-        <>
-          <SectionHeader title="Milestones reached" icon="flag" />
-          <Card>
-            <Stack gap={spacing.sm}>
-              {milestones.map((m) => (
-                <Row key={m.id} gap={spacing.sm} align="flex-start">
-                  <Icon name="check-circle" size={18} color={c.sage} />
-                  <Text variant="bodyMd" style={{ flex: 1 }}>
-                    {m.title}
-                  </Text>
-                  <Text variant="labelMd" tone="tertiary">
-                    {formatShort(m.achievedAt!)}
-                  </Text>
-                </Row>
-              ))}
-            </Stack>
-          </Card>
-        </>
-      ) : null}
 
       {reflections.length || reviews.length ? (
         <>

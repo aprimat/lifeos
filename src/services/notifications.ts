@@ -94,12 +94,11 @@ export function planReminders(data: UserData, now = new Date()): Planned[] {
   const idx = buildIndex(data);
   const today = todayISO(now);
   const out: Planned[] = [];
-  const drafts = new Set(data.commitments.filter((c) => c.status === 'draft').map((c) => c.id));
 
   for (let i = 0; i < HORIZON_DAYS; i++) {
     const date = addDays(today, i);
     for (const habit of data.habits) {
-      if (habit.status === 'archived' || (habit.commitmentId && drafts.has(habit.commitmentId))) continue;
+      if (habit.status === 'archived' || idx.draftHabits.has(habit.id)) continue;
       const v = versionOn(habit, date);
       if (!v.reminderTime) continue;
       const o = occurrence(habit, date, idx, today);

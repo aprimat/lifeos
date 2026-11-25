@@ -12,7 +12,27 @@ import type { Commitment, Habit, ISODate } from '@/domain/types';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
-import { daysPerWeek } from '../goals/shared';
+import { daysPerWeek, scheduleLabel } from '../goals/shared';
+
+/** Commitment lengths offered (plan v1.4 §7). "Until a date" is chosen on a calendar. */
+export const COMMITMENT_LENGTHS = [7, 30, 60, 90];
+
+/** "walk daily", "meditate 3× per week" … joined as a sentence list. */
+export function habitPhrases(habits: Habit[]): string {
+  const parts = habits.map((h) => {
+    const sched = scheduleLabel(currentVersion(h).schedule);
+    const when = sched === 'Every day' ? 'every day' : sched.includes('per week') ? sched.replace('per week', 'a week') : `on ${sched}`;
+    return `${h.title.charAt(0).toLowerCase()}${h.title.slice(1)} ${when}`;
+  });
+  if (parts.length <= 1) return parts[0] ?? '';
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+}
+
+/** The one-line promise: "For 30 days I'll walk every day and meditate 3× a week." */
+export function pledgeSentence(days: number, endDate: ISODate | null, habits: Habit[]): string {
+  const period = endDate ? `Until ${formatShort(endDate)}` : `For ${days} days`;
+  return habits.length ? `${period} I'll ${habitPhrases(habits)}.` : `${period} I'll follow the habits I choose.`;
+}
 
 export function durationLabel(days: number | null): string {
   return days === null ? 'Ongoing' : `${days} days`;

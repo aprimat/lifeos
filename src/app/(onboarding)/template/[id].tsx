@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -10,17 +10,15 @@ import { Icon } from '@/components/icon';
 import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { focusLabel } from '@/copy';
+import { completeOnboarding } from '@/data/actions';
 import { applyTemplate, getTemplate, type TemplateHabit } from '@/data/templates';
-import { addDays, formatShort, todayISO, weekdayIndex } from '@/domain/dates';
+import { todayISO } from '@/domain/dates';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
 import { describeTemplateHabit } from '@/screens/onboarding/describe';
 
-type StartChoice = 'today' | 'tomorrow' | 'monday';
-type DurationChoice = '30' | '60' | '90' | 'ongoing';
-
-/** Template setup: a few questions, optional habits, length and start date. */
+/** Template setup (plan v1.4): a few questions and optional habits. It adds habits; a goal link is optional. */
 export default function TemplateRoute() {
   const { id, goalId, onboarding } = useLocalSearchParams<{ id: string; goalId?: string; onboarding?: string }>();
   const t = getTemplate(id);
@@ -30,8 +28,8 @@ export default function TemplateRoute() {
     Object.fromEntries((t?.questions ?? []).map((q) => [q.id, q.options[0]?.value ?? ''])),
   );
   const [optionalOn, setOptionalOn] = useState<string[]>([]);
-  const [duration, setDuration] = useState<DurationChoice>(String(t?.durationDays ?? 30) as DurationChoice);
-  const [start, setStart] = useState<StartChoice>('today');
+  const [withGoal, setWithGoal] = useState(true);
+  const creating = useRef(false);
 
   const habits = useMemo(() => (t ? t.habits(answers) : []), [t, answers]);
 
@@ -43,30 +41,39 @@ export default function TemplateRoute() {
     );
   }
 
-  const today = todayISO();
-  const nextMonday = addDays(today, 7 - weekdayIndex(today));
-  const startDate = start === 'today' ? today : start === 'tomorrow' ? addDays(today, 1) : nextMonday;
   const included = habits.filter((h) => !h.optional || optionalOn.includes(h.key));
 
   const toggleOptional = (h: TemplateHabit) =>
     setOptionalOn((cur) => (cur.includes(h.key) ? cur.filter((k) => k !== h.key) : [...cur, h.key]));
 
-  const create = () => {
-    const commitmentId = applyTemplate(t.id, {
+  const create = async () => {
+    if (creating.current) return;
+    creating.current = true;
+    applyTemplate(t.id, {
       answers,
-      goalId: goalId ?? null,
-      startDate,
-      durationDays: duration === 'ongoing' ? null : Number(duration),
+      goalId: goalId ? goalId : withGoal ? undefined : null,
+      startDate: todayISO(),
       includedKeys: included.map((h) => h.key),
     });
-    router.replace(`/commitment/${commitmentId}/review${onboarding ? '?onboarding=1' : ''}`);
+    if (onboarding) {
+      await completeOnboarding();
+      router.replace('/today');
+    } else router.replace('/habits');
   };
 
   return (
     <Screen
       back
       title="Template"
-      footer={<Button title="Review plan" iconRight="arrow-forward" onPress={create} disabled={included.length === 0} testID="template-continue" />}>
+      footer={
+        <Button
+          title={`Add ${included.length === 1 ? 'this habit' : `these ${included.length} habits`}`}
+          icon="add"
+          onPress={create}
+          disabled={included.length === 0}
+          testID="template-continue"
+        />
+      }>
       <Row gap={spacing.md}>
         <IconTile tone="primary" size={52}>
           <Icon name={t.icon} size={26} color={c.primaryText} />
@@ -76,16 +83,6 @@ export default function TemplateRoute() {
         </View>
       </Row>
       <PageTitle title={t.title} subtitle={t.summary} />
-      <Card inset>
-        <Text variant="labelSm" tone="tertiary" uppercase>
-          Goal
-        </Text>
-        <Text variant="bodyLg">{t.goalTitle}</Text>
-        <Text variant="labelSm" tone="tertiary" uppercase style={{ marginTop: spacing.sm }}>
-          Commitment
-        </Text>
-        <Text variant="bodyLg">{t.commitmentTitle}</Text>
-      </Card>
 
       {t.questions.map((q) => (
         <Field key={q.id} label={q.label}>
@@ -129,32 +126,21 @@ export default function TemplateRoute() {
         );
       })}
 
-      <Field label="Length">
-        <ChipGroup<DurationChoice>
-          options={[
-            { value: '30', label: '30 days' },
-            { value: '60', label: '60 days' },
-            { value: '90', label: '90 days' },
-            { value: 'ongoing', label: 'Ongoing' },
-          ]}
-          value={duration}
-          onChange={(v) => setDuration(v as DurationChoice)}
-        />
-      </Field>
+      {goalId ? null : (
+        <Card selected={withGoal} onPress={() => setWithGoal((v) => !v)} accessibilityLabel={`Link these habits to the goal ${t.goalTitle}`}>
+          <Row gap={spacing.md}>
+            <Icon name={withGoal ? 'check-box' : 'check-box-outline-blank'} size={24} color={withGoal ? c.primary : c.textTertiary} />
+            <View style={{ flex: 1 }}>
+              <Text variant="labelLg">Is this for a bigger goal?</Text>
+              <Text variant="bodySm" tone="secondary">
+                Link them to “{t.goalTitle}”. Optional, and you can change it later.
+              </Text>
+            </View>
+          </Row>
+        </Card>
+      )}
 
-      <Field label="Start" hint={`Starts ${formatShort(startDate)}.`}>
-        <ChipGroup<StartChoice>
-          options={[
-            { value: 'today', label: 'Today' },
-            { value: 'tomorrow', label: 'Tomorrow' },
-            { value: 'monday', label: `Next Monday (${formatShort(nextMonday)})` },
-          ]}
-          value={start}
-          onChange={(v) => setStart(v as StartChoice)}
-        />
-      </Field>
-
-      <Banner title="Nothing starts yet" body="Next you'll see the full plan and can adjust habits, schedule and rest days before you begin." />
+      <Banner title="Starts today" body="The habits appear on Today straight away. Edit any of them later, or make a commitment from the Habits tab." />
     </Screen>
   );
 }

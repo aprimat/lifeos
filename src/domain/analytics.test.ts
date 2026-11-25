@@ -88,11 +88,13 @@ describe('occurrence status', () => {
     expect(occurrence(h, '2026-11-11', i, today).planned).toBe(false); // Wed, under the new Monday-only schedule
   });
 
-  it('ignores paused commitment days', () => {
-    const c = makeCommitment({ pauses: [{ start: '2026-11-05', end: '2026-11-07' }] });
-    const h = makeHabit({ commitmentId: c.id });
-    const b = habitBreakdown(h, '2026-11-02', '2026-11-08', idx([h], [], [], [c]), today);
-    expect(b.eligible).toBe(4);
+  it("ignores the habit's own paused days; a commitment never stops its habits", () => {
+    const h = makeHabit({ pauses: [{ start: '2026-11-05', end: '2026-11-07' }] });
+    const c = makeCommitment({ habitIds: [h.id], durationDays: 3, status: 'completed' });
+    expect(habitBreakdown(h, '2026-11-02', '2026-11-08', idx([h], [], [], [c]), today).eligible).toBe(4);
+    const free = makeHabit();
+    const c2 = makeCommitment({ habitIds: [free.id], durationDays: 3, status: 'completed' });
+    expect(habitBreakdown(free, '2026-11-02', '2026-11-08', idx([free], [], [], [c2]), today).eligible).toBe(7);
   });
 
   it('derives full/minimum/partial from an entered value', () => {
@@ -158,7 +160,8 @@ describe('reduce habits', () => {
 describe('commitment progress', () => {
   it('reports day number, planned sessions and consistency', () => {
     const c = makeCommitment({ durationDays: 14 });
-    const h = makeHabit({ commitmentId: c.id }, { schedule: { type: 'weekdays', weekdays: [0, 1, 2, 3, 4] } });
+    const h = makeHabit({}, { schedule: { type: 'weekdays', weekdays: [0, 1, 2, 3, 4] } });
+    c.habitIds = [h.id];
     const ex = makeException({ commitmentId: c.id, start: '2026-11-04', end: '2026-11-04' });
     const logs = [makeLog(h.id, '2026-11-02', 'full'), makeLog(h.id, '2026-11-03', 'full', 12)];
     const p = commitmentProgress(c, [h], idx([h], logs, [ex], [c]), '2026-11-06');
@@ -195,8 +198,8 @@ describe('suggestions', () => {
 
 describe('milestones', () => {
   it('records the day the Nth session was done, in target order', () => {
-    const c = makeCommitment({ durationDays: 30 });
-    const h = makeHabit({ commitmentId: c.id });
+    const h = makeHabit();
+    const c = makeCommitment({ durationDays: 30, habitIds: [h.id] });
     const logs = ['02', '03', '04', '05', '06'].map((d, k) => makeLog(h.id, `2026-11-${d}`, k === 1 ? 'skipped' : 'full'));
     const stamp = '2026-01-01T00:00:00.000Z';
     const ms = [

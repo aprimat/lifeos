@@ -2,9 +2,16 @@ import { addDays, todayISO } from '@/domain/dates';
 import { isHabitActiveOn, buildIndex, versionOn } from '@/domain/schedule';
 
 import {
+  addGoalSign,
   applySuggestion,
+  createGoal,
+  markGoalAchieved,
+  renameMilestone,
+  setMilestoneAchieved,
   createCommitment,
   createHabit,
+  discardDraftCommitment,
+  endCommitment,
   pauseCommitment,
   pauseHabit,
   renewCommitment,
@@ -15,6 +22,7 @@ import {
   updateHabit,
 } from './actions';
 import { useStore } from './store';
+import { applyTemplate, getTemplate } from './templates';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -49,7 +57,7 @@ const state = () => useStore.getState().data;
 const habit = (id: string) => state().habits.find((h) => h.id === id)!;
 const idx = () => buildIndex(state());
 const newHabit = (startDate = addDays(today, -14), commitmentId: string | null = null) =>
-  createHabit({ kind: 'build', title: 'Read', icon: 'book', goalId: null, commitmentId, startDate, version });
+  createHabit({ kind: 'build', title: 'Read', icon: 'book', goalIds: [], commitmentId, startDate, version });
 
 beforeAll(async () => {
   expect(await useStore.getState().signUp({ name: 'T', email: 'actions@example.com', password: 'password123' })).toBeNull();
@@ -118,5 +126,91 @@ describe('review fixes (actions)', () => {
     const nid = renewCommitment(cid, { durationDays: 30 })!;
     expect(state().commitments.find((k) => k.id === cid)!.endedAt).toBe(today);
     expect(state().commitments.find((k) => k.id === nid)!.startDate).toBe(addDays(today, 1));
+  });
+});
+
+describe('v1.4: a commitment points at habits, it never owns them', () => {
+  it('renewing keeps the same habits (no copies) and a harder target applies from the new start', () => {
+    const cid = createCommitment({ goalId: null, title: 'Same', startDate: addDays(today, -9), durationDays: 30 });
+    const hid = newHabit(addDays(today, -9), cid);
+    startCommitment(cid);
+    const before = state().habits.length;
+    const nid = renewCommitment(cid, { durationDays: 30, targetScale: 1.5 })!;
+    expect(state().habits.length).toBe(before);
+    expect(state().commitments.find((k) => k.id === nid)!.habitIds).toEqual([hid]);
+    expect(versionOn(habit(hid), today).build?.target).toBe(20);
+    expect(versionOn(habit(hid), addDays(today, 1)).build?.target).toBe(30);
+  });
+
+  it('ending a commitment leaves its habits running', () => {
+    const cid = createCommitment({ goalId: null, title: 'End', startDate: addDays(today, -5), durationDays: 30 });
+    const hid = newHabit(addDays(today, -5), cid);
+    startCommitment(cid);
+    endCommitment(cid);
+    expect(isHabitActiveOn(habit(hid), addDays(today, 3), idx())).toBe(true);
+  });
+
+  it('pausing a commitment pauses its habits; resuming brings back only those', () => {
+    const cid = createCommitment({ goalId: null, title: 'Pause', startDate: addDays(today, -5), durationDays: 30 });
+    const a = newHabit(addDays(today, -5), cid);
+    const b = newHabit(addDays(today, -5), cid);
+    startCommitment(cid);
+    pauseHabit(b, addDays(today, -3)); // paused on its own before
+    pauseCommitment(cid);
+    expect(habit(a).status).toBe('paused');
+    resumeCommitment(cid);
+    expect(habit(a).status).toBe('active');
+    expect(habit(b).status).toBe('paused');
+  });
+
+  it('discarding a draft removes only the habits it created', async () => {
+    const keep = newHabit();
+    await new Promise((r) => setTimeout(r, 5));
+    const cid = createCommitment({ goalId: null, title: 'Draft', startDate: today, durationDays: 7, habitIds: [keep] });
+    const made = newHabit(today, cid);
+    discardDraftCommitment(cid);
+    expect(state().habits.some((h) => h.id === made)).toBe(false);
+    expect(state().habits.some((h) => h.id === keep)).toBe(true);
+  });
+});
+
+describe('v1.4: starting an old draft', () => {
+  it("moves only the draft's own habits to today, not existing ones it points at", async () => {
+    const existing = newHabit(addDays(today, -20));
+    await new Promise((r) => setTimeout(r, 5));
+    const cid = createCommitment({ goalId: null, title: 'Old draft', startDate: addDays(today, -3), durationDays: 30, habitIds: [existing] });
+    const own = newHabit(addDays(today, -3), cid);
+    startCommitment(cid);
+    expect(habit(existing).startDate).toBe(addDays(today, -20));
+    expect(habit(own).startDate).toBe(today);
+  });
+});
+
+describe('v1.4: a goal and the signs that it is achieved', () => {
+  test('a template creates its goal with suggested signs; no goal means no signs', () => {
+    const before = state().milestones.length;
+    const ids = applyTemplate('movement', { answers: {}, startDate: today });
+    const goalId = habit(ids[0]).goalIds[0];
+    const signs = state().milestones.filter((m) => m.ownerType === 'goal' && m.ownerId === goalId);
+    expect(signs.map((m) => m.title)).toEqual(getTemplate('movement')!.goalSigns);
+    expect(signs.every((m) => m.achievedAt === null)).toBe(true);
+
+    applyTemplate('movement', { answers: {}, startDate: today, goalId: null });
+    expect(state().milestones.length).toBe(before + signs.length);
+  });
+
+  test('ticking every sign leaves the goal for the user to mark achieved', () => {
+    const g = createGoal({ title: 'Be healthy', focusArea: 'health', myWhy: null, desiredOutcome: null });
+    const a = addGoalSign(g, '  Lost 9 kg ');
+    const b = addGoalSign(g, 'Eat healthy');
+    setMilestoneAchieved(a, true);
+    setMilestoneAchieved(b, true);
+    expect(state().goals.find((x) => x.id === g)!.status).toBe('active');
+    expect(state().milestones.find((m) => m.id === a)!.title).toBe('Lost 9 kg');
+    renameMilestone(b, 'Eat healthy most days');
+    setMilestoneAchieved(b, false);
+    expect(state().milestones.find((m) => m.id === b)).toMatchObject({ title: 'Eat healthy most days', achievedAt: null });
+    markGoalAchieved(g);
+    expect(state().goals.find((x) => x.id === g)!.status).toBe('achieved');
   });
 });

@@ -15,10 +15,13 @@ export interface Repository {
   loadUserData(userId: string): Promise<UserData | null>;
   saveUserData(userId: string, data: UserData): Promise<void>;
   deleteUserData(userId: string): Promise<void>;
+  /** Keep a copy of data as it was before a schema migration (only the first copy per version is kept). */
+  backupUserData(userId: string, fromVersion: number, data: unknown): Promise<void>;
 }
 
 const USERS_KEY = 'lifeos:v1:users';
 const dataKey = (userId: string) => `lifeos:v1:data:${userId}`;
+const backupKey = (userId: string, version: number) => `lifeos:v1:backup:schema${version}:${userId}`;
 
 export class LocalRepository implements Repository {
   async loadUsers(): Promise<User[]> {
@@ -40,7 +43,13 @@ export class LocalRepository implements Repository {
   }
 
   async deleteUserData(userId: string): Promise<void> {
-    await AsyncStorage.removeItem(dataKey(userId));
+    await AsyncStorage.multiRemove([dataKey(userId), backupKey(userId, 1)]);
+  }
+
+  async backupUserData(userId: string, fromVersion: number, data: unknown): Promise<void> {
+    const key = backupKey(userId, fromVersion);
+    if (await AsyncStorage.getItem(key)) return;
+    await AsyncStorage.setItem(key, JSON.stringify(data));
   }
 }
 

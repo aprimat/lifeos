@@ -26,7 +26,7 @@ export function ReflectionScreen({ habitId, date }: { habitId?: string; date?: s
   const today = useToday();
   const day = date || today;
   const habit = useHabit(habitId);
-  const goal = useGoal(habit?.goalId ?? undefined);
+  const goal = useGoal(habit?.goalIds[0]);
   const idx = useIndex();
   const existing = useStore((s) => s.data.reflections.find((r) => r.habitId === habitId && r.date === day));
 

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 
 import { Button, IconButton } from '@/components/button';
 import { Card, IconTile, Row, Stack } from '@/components/card';
@@ -13,7 +13,8 @@ import { SAFETY, TIME_OF_DAY } from '@/copy';
 import { archiveHabit, pauseHabit, resumeHabit } from '@/data/actions';
 import { isAlcohol, type DayStatus, type Occurrence } from '@/domain/schedule';
 import type { Habit } from '@/domain/types';
-import { useCommitment, useGoal } from '@/hooks/use-data';
+import { useStore } from '@/data/store';
+import { useHabitCommitment } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
@@ -42,8 +43,10 @@ export function statusTone(s: DayStatus): Tone {
 /** Breadcrumb + title + "scheduled today" pill. */
 export function HabitHeader({ habit, occ }: { habit: Habit; occ: Occurrence }) {
   const c = useColors();
-  const goal = useGoal(habit.goalId ?? undefined);
-  const commitment = useCommitment(habit.commitmentId ?? undefined);
+  const allGoals = useStore((st) => st.data.goals);
+  const goals = allGoals.filter((g) => habit.goalIds.includes(g.id));
+  const latest = useHabitCommitment(habit.id);
+  const commitment = latest && (latest.status === 'active' || latest.status === 'paused') ? latest : undefined;
   const tod = TIME_OF_DAY.find((t) => t.value === occ.version.timeOfDay);
   const flexible = occ.version.schedule.type === 'flexWeekly';
   const todayPill =
@@ -63,28 +66,40 @@ export function HabitHeader({ habit, occ }: { habit: Habit; occ: Occurrence }) {
 
   return (
     <Stack gap={spacing.md}>
-      {goal || commitment ? (
-        <Card
-          inset
-          onPress={() => (commitment ? router.push(`/commitment/${commitment.id}`) : router.push(`/goal/${goal!.id}`))}
-          accessibilityLabel={commitment ? `Open commitment ${commitment.title}` : `Open goal ${goal?.title}`}>
+      {commitment ? (
+        <Card inset onPress={() => router.push(`/commitment/${commitment.id}`)} accessibilityLabel={`Open commitment ${commitment.title}`}>
           <Row gap={spacing.md}>
             <IconTile size={36}>
-              <Icon name={commitment ? 'track-changes' : 'flag'} size={20} />
+              <Icon name="track-changes" size={20} />
             </IconTile>
             <View style={{ flex: 1 }}>
-              {goal ? (
-                <Text variant="labelSm" tone="tertiary" uppercase numberOfLines={1}>
-                  Goal · {goal.title}
-                </Text>
-              ) : null}
+              <Text variant="labelSm" tone="tertiary" uppercase numberOfLines={1}>
+                Commitment
+              </Text>
               <Text variant="bodyMd" numberOfLines={1}>
-                {commitment ? commitment.title : goal?.title}
+                {commitment.title}
               </Text>
             </View>
             <Icon name="chevron-right" color={c.textTertiary} />
           </Row>
         </Card>
+      ) : null}
+      {goals.length ? (
+        <Row wrap gap={spacing.sm}>
+          {goals.map((g) => (
+            <Pressable
+              key={g.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Open goal ${g.title}`}
+              onPress={() => router.push(`/goal/${g.id}`)}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: spacing.md, minHeight: 36, borderRadius: 18, backgroundColor: c.inset, opacity: pressed ? 0.7 : 1 })}>
+              <Icon name="flag" size={16} color={c.primaryText} />
+              <Text variant="labelMd" numberOfLines={1}>
+                {g.title}
+              </Text>
+            </Pressable>
+          ))}
+        </Row>
       ) : null}
       <Row gap={spacing.md} align="flex-start">
         <IconTile tone={habit.kind === 'reduce' ? 'amber' : 'primary'} size={56}>
