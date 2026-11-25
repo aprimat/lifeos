@@ -11,6 +11,7 @@ import { Text } from '@/components/text';
 import { consistency, habitsBreakdown, pct } from '@/domain/analytics';
 import { addDays, formatShort } from '@/domain/dates';
 import type { DataIndex } from '@/domain/schedule';
+import { stepCounts } from '@/domain/steps';
 import type { Goal, Habit, Milestone } from '@/domain/types';
 import { useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
@@ -65,7 +66,7 @@ export function GoalsTab() {
             </Text>
           ) : null}
           {active.map((g) => (
-            <GoalCard key={g.id} goal={g} signs={signsFor(g)} habits={habitsFor(g)} idx={idx} today={today} />
+            <GoalCard key={g.id} goal={g} signs={signsFor(g)} habits={habitsFor(g)} steps={stepCounts(data.steps, g.id)} idx={idx} today={today} />
           ))}
 
           <Folded
@@ -92,7 +93,7 @@ export function GoalsTab() {
   );
 }
 
-function GoalCard({ goal, signs, habits, idx, today }: { goal: Goal; signs: Milestone[]; habits: Habit[]; idx: DataIndex; today: string }) {
+function GoalCard({ goal, signs, habits, steps, idx, today }: { goal: Goal; signs: Milestone[]; habits: Habit[]; steps: { done: number; total: number }; idx: DataIndex; today: string }) {
   const c = useColors();
   const signsDone = signs.filter((m) => m.achievedAt).length;
   const recent = habitsBreakdown(habits, addDays(today, -(WINDOW_DAYS - 1)), today, idx, today);
@@ -100,6 +101,7 @@ function GoalCard({ goal, signs, habits, idx, today }: { goal: Goal; signs: Mile
   const summary = [
     `${habits.length} habit${habits.length === 1 ? '' : 's'}`,
     signs.length ? `${signsDone} of ${signs.length} signs` : null,
+    steps.total ? `${steps.done} of ${steps.total} steps` : null,
     rate !== null ? `${pct(rate)} last 4 weeks` : null,
   ]
     .filter(Boolean)

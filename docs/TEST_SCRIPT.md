@@ -197,3 +197,19 @@ Run on one iOS and one Android phone, in light and dark mode. Tick each step.
 - [ ] **Sheets open calmly.** Tap the calendar icon, a habit's ⋯, or the round + → the grey background appears at once (it doesn't slide), and only the white panel slides up. Close it (✕, tap the grey, or pick an option) → the panel slides down, then the grey goes. Same for any sheet in the app (e.g. a habit's ⋯ menu on its page).
 - [ ] **From a sheet to a screen.** + → **New habit** → the habit form opens normally (no stuck grey layer).
 - [ ] **Smaller +.** The round + in the tab bar is smaller (closer to the other tab icons) and still easy to tap.
+
+## 23. Steps: one-off actions for a goal (PR: goal-steps)
+- [ ] **Data update.** After the update, open the app → everything is as before (habits, goals, history).
+- [ ] **Add from the goal.** Goals tab → open a goal → a **Steps** card (below Signs) → **Add a step** → type "Update my CV" → **Today** → Save → it's listed with "Today"; the card shows "0 of 1".
+- [ ] **On Today.** Today tab → under the habits, a **Steps** section with "Update my CV" and the goal name under it. The "N of M completed" card and the day ring don't change because of it.
+- [ ] **Tick a step.** Tap its circle → green tick, then after a moment it moves to the bottom of Steps; tap again → unticked. On the goal page it shows under **Done (1)** with "Done today".
+- [ ] **Undated step.** Goal page → Add a step → **No date** → Save → it's only on the goal page (not on Today); tick it there.
+- [ ] **Pick a day.** Add a step → **Pick a day** → choose a day next week → the chip shows that day → Save → swipe Today's week strip to that day → the step is there.
+- [ ] **Carried over.** Add a step dated yesterday (Pick a day → yesterday), don't tick it → Today shows it with "· from <yesterday>" in amber. On the goal page it says "From <yesterday>" in amber.
+- [ ] **Edit, time spent.** Tap ⋯ on a step → edit the name, change the date, enter **Time spent** 45 → Save → the goal page shows "Done … · 45 min" once it's done.
+- [ ] **Make this a habit.** ⋯ on a step → **Make this a habit** → the habit form opens with the step's name and goal filled in → Save → the habit exists and the step is gone. (Leave the form without saving → the step stays.)
+- [ ] **Delete.** ⋯ → **Delete step** → gone.
+- [ ] **From the + button.** Tap + → **New step** → the sheet asks "For which goal?" (only one goal → already chosen) → date defaults to Today → Save → it shows on Today. With no goals at all, it says to add a goal first, with an **Add a goal** button.
+- [ ] **Goals tab.** A goal with steps shows "… · 1 of 3 steps · …" on its card.
+- [ ] **Let it go.** Let a goal go → its open steps disappear from Today; bring it back → they return.
+- [ ] **Monthly report.** Progress → Your <month> report → "What went well" includes "N steps done toward your goals" when you've done some this month.

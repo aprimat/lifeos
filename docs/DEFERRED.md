@@ -16,18 +16,6 @@ Work that's agreed in principle but put on hold. Each item keeps what was decide
 
 **Open, waiting on the UI review:** where it's shown (goal page, Goals tab card, or both), what period it covers (all time, or this month too), and how it looks.
 
-## One-off Steps for a goal
-**Status:** agreed, not started.
-
-**Agreed so far:**
-- A step belongs to exactly one goal.
-- It has a title, an optional date, and an optional "time spent" when you tick it done.
-- It shows on Today only on its date.
-- It never repeats; for something repeating, the app offers "Make this a habit".
-- No reminders at first.
-- Its minutes add to the goal's time.
-- The goal page keeps Signs, Habits and Steps visually distinct.
-
 ## Commitments
 **Status:** hidden, 2026-11-24. The owner wants to understand how commitments should work before showing them again.
 
@@ -47,12 +35,11 @@ Today now shows one list without Morning/Afternoon/Evening titles. Under the hoo
 2. What period: all time only, or also "this month" / "last 4 weeks"?
 3. How does it look: one line ("12 h 30 min · 48 sessions"), or a small breakdown per habit?
 
-**Steps**
-
-4. Is the + sheet's third row "New step"? If so, it first has to ask which goal the step is for.
-5. Does a dated step that wasn't done carry over to the next day on Today, or stay on its date as "not done"?
-6. Do done steps count in the reports (monthly report, "What went well"), or only on the goal page?
-7. Can you tick a step done without a date, straight from the goal page?
+**Steps** (answered 2026-11-25, built in the goal-steps PR)
+4. "New step" is the third row in the + sheet and asks which goal first.
+5. An undone step from an earlier day stays on Today, marked "from Mon".
+6. The monthly report's "What went well" counts done steps.
+7. Undated steps live on the goal page and can be ticked there.
 
 **Goals and signs**
 

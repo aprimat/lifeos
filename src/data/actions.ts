@@ -14,6 +14,7 @@ import type {
   ID,
   ISODate,
   Milestone,
+  Step,
   Reflection,
   ScheduleException,
   Settings,
@@ -98,6 +99,35 @@ export function restoreGoal(id: ID) {
 /** A goal is a result: the user says when it's reached. Its habits are left as they are. */
 export function markGoalAchieved(id: ID, achieved = true) {
   updateGoal(id, achieved ? { status: 'achieved', achievedAt: todayISO() } : { status: 'active', achievedAt: null });
+}
+
+// ---------------- Steps (one-off actions for a goal) ----------------
+
+export type StepInput = Pick<Step, 'goalId' | 'title'> & Partial<Pick<Step, 'date' | 'minutes'>>;
+
+export function addStep(input: StepInput): ID {
+  const step = entity<Omit<Step, 'id' | 'createdAt' | 'updatedAt'>>({
+    date: null,
+    doneAt: null,
+    minutes: null,
+    ...input,
+    title: input.title.trim(),
+  });
+  mutate((d) => ({ steps: [...d.steps, step] }));
+  return step.id;
+}
+
+export function updateStep(id: ID, patch: Partial<Pick<Step, 'title' | 'date' | 'minutes'>>) {
+  mutate((d) => ({ steps: replace(d.steps, id, patch.title !== undefined ? { ...patch, title: patch.title.trim() } : patch) }));
+}
+
+/** Tick or untick a step. Done on `day` (defaults to today). */
+export function setStepDone(id: ID, done: boolean, day: ISODate = todayISO()) {
+  mutate((d) => ({ steps: replace(d.steps, id, { doneAt: done ? day : null }) }));
+}
+
+export function deleteStep(id: ID) {
+  mutate((d) => ({ steps: d.steps.filter((x) => x.id !== id) }));
 }
 
 // ---------------- Milestones ----------------

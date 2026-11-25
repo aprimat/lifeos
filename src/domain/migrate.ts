@@ -5,6 +5,8 @@ import { emptyUserData, SCHEMA_VERSION, type Commitment, type DateRange, type Ha
 /**
  * Brings saved data up to the current schema. Pure: `today` is passed in.
  *
+ * v2 → v3: adds the `steps` list (one-off steps for goals); it starts empty.
+ *
  * v1 → v2 (plan v1.4): a habit no longer belongs to a commitment, and it can support several goals.
  * - `habit.goalId` becomes `habit.goalIds`.
  * - `habit.commitmentId` becomes `commitment.habitIds`.
@@ -26,8 +28,11 @@ export function migrateData(raw: unknown, today: ISODate): UserData {
   if (!raw || typeof raw !== 'object') return base;
   const data = raw as Partial<UserData> & { schemaVersion?: number };
   const merged = { ...base, ...data, settings: { ...base.settings, ...data.settings } } as UserData;
-  if ((data.schemaVersion ?? 1) >= SCHEMA_VERSION) return merged;
-  return v1ToV2(merged, today);
+  const from = data.schemaVersion ?? 1;
+  if (from >= SCHEMA_VERSION) return merged;
+  // Each step only adds to the one before; missing lists (e.g. `steps`) come from the empty base.
+  const v2 = from < 2 ? v1ToV2(merged, today) : merged;
+  return { ...v2, schemaVersion: SCHEMA_VERSION };
 }
 
 const RUNNING = new Set(['active', 'paused']);

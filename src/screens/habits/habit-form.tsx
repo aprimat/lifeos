@@ -27,6 +27,7 @@ import {
   createGoal,
   completeOnboarding,
   createHabit,
+  deleteStep,
   removeException,
   updateHabit,
   updateSettings,
@@ -222,9 +223,13 @@ export interface HabitFormProps {
   onboarding?: boolean;
   /** Go back to the previous screen after creating (e.g. to "Make a commitment"). */
   returnAfterSave?: boolean;
+  /** Prefill the name (e.g. turning a step into a habit). */
+  initialTitle?: string;
+  /** The step this habit replaces: it's removed once the habit is saved. */
+  fromStepId?: string | null;
 }
 
-export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId = null, onboarding, returnAfterSave }: HabitFormProps) {
+export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId = null, onboarding, returnAfterSave, initialTitle, fromStepId = null }: HabitFormProps) {
   const editing = !!habit;
   const today = useToday();
   const c = useColors();
@@ -239,7 +244,7 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
     [allExceptions, habit],
   );
 
-  const [f, setF] = useState<FormState>(() => initialState(habit, kind, goalId ?? commitment?.goalId ?? null));
+  const [f, setF] = useState<FormState>(() => ({ ...initialState(habit, kind, goalId ?? commitment?.goalId ?? null), ...(!habit && initialTitle ? { title: initialTitle } : {}) }));
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [customTrigger, setCustomTrigger] = useState('');
@@ -332,6 +337,7 @@ export function HabitForm({ habit, kind = 'build', commitmentId = null, goalId =
       safetyAcknowledged: acknowledged,
     });
     for (const e of drafts) addException({ habitId: id, commitmentId: null, start: e.start, end: e.end, kind: e.kind });
+    if (fromStepId) deleteStep(fromStepId);
     if (linkedCommitmentId) {
       goBack(commitment?.status === 'draft' ? `/commitment/${linkedCommitmentId}/plan` : `/commitment/${linkedCommitmentId}`);
     } else if (returnAfterSave) {
