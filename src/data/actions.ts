@@ -70,6 +70,27 @@ export function archiveGoal(id: ID) {
   updateGoal(id, { status: 'archived' });
 }
 
+/** Habits that only this goal relies on (no other active goal), not yet archived. */
+export function habitsOnlyForGoal(d: Pick<UserData, 'habits' | 'goals'>, goalId: ID): Habit[] {
+  const otherActive = new Set(d.goals.filter((g) => g.id !== goalId && g.status === 'active').map((g) => g.id));
+  return d.habits.filter((h) => h.status !== 'archived' && h.goalIds.includes(goalId) && !h.goalIds.some((g) => otherActive.has(g)));
+}
+
+/**
+ * "Let it go" (plan v1.4): the goal is set aside, its history kept (status 'archived').
+ * Optionally archives the habits only this goal relies on; habits another active goal uses keep going.
+ */
+export function letGoGoal(id: ID, archiveItsHabits = false) {
+  const day = todayISO();
+  mutate((d) => {
+    const drop = archiveItsHabits ? new Set(habitsOnlyForGoal(d, id).map((h) => h.id)) : new Set<ID>();
+    return {
+      goals: replace(d.goals, id, { status: 'archived' }),
+      habits: d.habits.map((h) => (drop.has(h.id) ? { ...h, status: 'archived' as const, archivedAt: day, updatedAt: now() } : h)),
+    };
+  });
+}
+
 export function restoreGoal(id: ID) {
   updateGoal(id, { status: 'active', achievedAt: null });
 }

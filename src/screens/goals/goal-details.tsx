@@ -12,10 +12,10 @@ import { Screen } from '@/components/screen';
 import { Sheet } from '@/components/sheet';
 import { Text } from '@/components/text';
 import { focusLabel } from '@/copy';
-import { addGoalSign, archiveGoal, deleteMilestone, markGoalAchieved, renameMilestone, restoreGoal, setMilestoneAchieved, updateGoal } from '@/data/actions';
+import { addGoalSign, deleteMilestone, habitsOnlyForGoal, letGoGoal, markGoalAchieved, renameMilestone, restoreGoal, setMilestoneAchieved, updateGoal } from '@/data/actions';
 import { consistency, habitsBreakdown, pct, reduceTrend } from '@/domain/analytics';
 import { addDays, formatShort, toISODate } from '@/domain/dates';
-import { useGoal, useGoalSigns, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
+import { useData, useGoal, useGoalSigns, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
@@ -39,6 +39,9 @@ export function GoalDetails() {
   const signs = useGoalSigns(id);
   const [signSheet, setSignSheet] = useState<null | { id: string | null }>(null);
   const [signDraft, setSignDraft] = useState('');
+  const [letGoOpen, setLetGoOpen] = useState(false);
+  const [archiveHabits, setArchiveHabits] = useState(false);
+  const data = useData();
 
   if (!goal) {
     return (
@@ -53,7 +56,8 @@ export function GoalDetails() {
   const reduce = goalHabits.filter((h) => h.kind === 'reduce');
   const recent = habitsBreakdown(goalHabits, addDays(today, -(WINDOW_DAYS - 1)), today, idx, today);
   const achieved = goal.status === 'achieved' || goal.status === 'concluded';
-  const statusLabel = goal.status === 'active' ? 'Active' : goal.status === 'archived' ? 'Archived' : 'Achieved';
+  const statusLabel = goal.status === 'active' ? 'Active' : goal.status === 'archived' ? 'Let go' : 'Achieved';
+  const onlyHere = habitsOnlyForGoal(data, goal.id);
   const signsDone = signs.filter((m) => m.achievedAt).length;
 
   const toggleSign = (signId: string, done: boolean) => {
@@ -99,6 +103,9 @@ export function GoalDetails() {
 
       {achieved ? (
         <Banner icon="emoji-events" title="You reached this goal" body="Its habits keep going for as long as you want them. Archive any you no longer need." />
+      ) : null}
+      {goal.status === 'archived' ? (
+        <Banner icon="spa" title="You let this goal go" body="Its history is kept. Tap Bring it back below if it matters again." />
       ) : null}
 
       {/* Signs it's achieved: the user ticks each one when it comes true */}
@@ -247,13 +254,18 @@ export function GoalDetails() {
         ) : null}
         {achieved ? <Button title="Not achieved yet: reopen" variant="ghost" icon="undo" onPress={() => markGoalAchieved(goal.id, false)} /> : null}
         {goal.status === 'archived' ? (
-          <Button title="Restore goal" variant="ghost" icon="unarchive" onPress={() => restoreGoal(goal.id)} />
+          <Button title="Bring it back" variant="secondary" icon="undo" onPress={() => restoreGoal(goal.id)} />
         ) : (
-          <Button title="Archive goal" variant="ghost" icon="archive" onPress={() => archiveGoal(goal.id)} />
+          <Button
+            title="Let it go"
+            variant="ghost"
+            icon="spa"
+            onPress={() => {
+              setArchiveHabits(false);
+              setLetGoOpen(true);
+            }}
+          />
         )}
-        <Text variant="bodySm" tone="tertiary" center>
-          Archiving keeps all of your history. Habits are never changed by it.
-        </Text>
       </Stack>
 
       <Sheet visible={!!achieveOpen} onClose={() => setAchieveOpen(false)} title={achieveOpen === 'signs' ? 'All signs are there' : 'Mark as achieved?'}>
@@ -292,6 +304,41 @@ export function GoalDetails() {
             }}
           />
         ) : null}
+      </Sheet>
+
+      <Sheet visible={letGoOpen} onClose={() => setLetGoOpen(false)} title="Let this goal go?">
+        <Text variant="bodyMd" tone="secondary">
+          Plans change, and that&apos;s fine. The goal moves to “Let go” in the Goals tab with all its history. You can bring it back any time.
+        </Text>
+        {onlyHere.length ? (
+          <Card selected={archiveHabits} onPress={() => setArchiveHabits((v) => !v)} accessibilityLabel={`Also archive its ${onlyHere.length} habits`}>
+            <Row gap={spacing.md}>
+              <Icon name={archiveHabits ? 'check-box' : 'check-box-outline-blank'} size={24} color={archiveHabits ? c.primary : c.textTertiary} />
+              <View style={{ flex: 1 }}>
+                <Text variant="labelLg">
+                  Also archive {onlyHere.length === 1 ? 'its habit' : `its ${onlyHere.length} habits`}
+                </Text>
+                <Text variant="bodySm" tone="secondary">
+                  {onlyHere.map((h) => h.title).join(', ')}. Their history is kept.
+                  {goalHabits.length > onlyHere.length ? ' Habits that another goal uses keep going.' : ''}
+                </Text>
+              </View>
+            </Row>
+          </Card>
+        ) : goalHabits.length ? (
+          <Text variant="bodySm" tone="tertiary">
+            Its habits keep going: another goal uses them.
+          </Text>
+        ) : null}
+        <Button
+          title="Let it go"
+          icon="spa"
+          onPress={() => {
+            letGoGoal(goal.id, archiveHabits);
+            setLetGoOpen(false);
+          }}
+        />
+        <Button title="Keep it" variant="ghost" onPress={() => setLetGoOpen(false)} />
       </Sheet>
 
       <Sheet visible={whyOpen} onClose={() => setWhyOpen(false)} title="My why">

@@ -4,14 +4,12 @@ import { Pressable, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { Card, Row, Stack } from '@/components/card';
-import { Group, ListRow } from '@/components/controls';
 import { Icon } from '@/components/icon';
 import { EmptyState, Pill } from '@/components/layout';
 import { ProgressBar } from '@/components/progress';
 import { Screen, TabHeader } from '@/components/screen';
 import { Text } from '@/components/text';
 import { commitmentProgress, pct } from '@/domain/analytics';
-import { formatShort } from '@/domain/dates';
 import { runningCommitment, type DataIndex } from '@/domain/schedule';
 import type { Goal, Habit, Milestone } from '@/domain/types';
 import { useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
@@ -32,16 +30,14 @@ export function HabitsTab() {
   const [showDone, setShowDone] = useState(false);
 
   const live = useMemo(() => habits.filter((h) => h.status !== 'archived'), [habits]);
-  const activeGoals = data.goals.filter((g) => g.status === 'active');
   // Achieved goals keep their group while their habits are still running.
   const shownGoals = data.goals.filter(
     (g) => g.status === 'active' || ((g.status === 'achieved' || g.status === 'concluded') && live.some((h) => h.goalIds.includes(g.id))),
   );
-  const doneGoals = data.goals.filter((g) => g.status !== 'active');
   const noGoal = live.filter((h) => !h.goalIds.some((id) => shownGoals.some((g) => g.id === id)));
   const archivedHabits = habits.filter((h) => h.status === 'archived');
   const running = runningCommitment(data.commitments, today);
-  const isNew = live.length === 0 && activeGoals.length === 0;
+  const isNew = live.length === 0;
 
   return (
     <Screen bare>
@@ -62,7 +58,7 @@ export function HabitsTab() {
           <EmptyState
             icon="repeat"
             title="What do you want to do regularly?"
-            body="Start with one small habit. You can link it to a goal later."
+            body="Start with one small habit. You can link it to a goal later, in the Goals tab."
             actionLabel="New habit"
             onAction={() => router.push('/habit/new')}
           />
@@ -106,13 +102,9 @@ export function HabitsTab() {
             </Stack>
           ) : null}
 
-          <Group>
-            <ListRow icon="flag" title="Add a goal" subtitle="A result you want, e.g. Improve health" onPress={() => router.push('/goal/new')} />
-          </Group>
-
-          {doneGoals.length || archivedHabits.length ? (
+          {archivedHabits.length ? (
             <Button
-              title={showDone ? 'Hide achieved and archived' : `Achieved and archived (${doneGoals.length + archivedHabits.length})`}
+              title={showDone ? 'Hide archived habits' : `Archived habits (${archivedHabits.length})`}
               variant="ghost"
               icon={showDone ? 'expand-less' : 'expand-more'}
               onPress={() => setShowDone((v) => !v)}
@@ -120,20 +112,6 @@ export function HabitsTab() {
           ) : null}
           {showDone ? (
             <Stack>
-              {doneGoals.map((g) => (
-                <Card key={g.id} inset onPress={() => router.push(`/goal/${g.id}`)} accessibilityLabel={g.title}>
-                  <Row>
-                    <Icon name={g.status === 'archived' ? 'archive' : 'emoji-events'} size={20} />
-                    <Text variant="labelLg" style={{ flex: 1 }} numberOfLines={1}>
-                      {g.title}
-                    </Text>
-                    <Pill
-                      label={g.status === 'archived' ? 'Archived' : `Achieved${g.achievedAt ? ` ${formatShort(g.achievedAt)}` : ''}`}
-                      tone={g.status === 'archived' ? 'neutral' : 'sage'}
-                    />
-                  </Row>
-                </Card>
-              ))}
               {archivedHabits.map((h) => (
                 <HabitRow key={h.id} habit={h} right="Archived" />
               ))}
