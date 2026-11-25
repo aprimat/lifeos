@@ -161,7 +161,7 @@ Run on one iOS and one Android phone, in light and dark mode. Tick each step.
 - [ ] **Habits tab.** A goal with signs shows a "1 of 3 signs" pill next to its name (green when all are ticked); a goal without signs shows no pill.
 - [ ] **Template signs.** Pick from templates → any template with "Is this for a bigger goal?" ticked → Add → open the goal → it has 3 suggested signs, all unticked. With the box unticked, no goal and no signs are created.
 
-## 21. Goals tab, "+" button and "Let it go" (PR: goals-tab)
+## 21. Goals tab, "+" button and "Let it go" (PR #6)
 - [ ] **Bottom bar.** It reads Today · Habits · **+** · Goals · Progress. The + is a round button with no label.
 - [ ] **+ sheet.** Tap **+** → a sheet "Add" with **New habit** and **New goal**. **New habit** → the habit form opens; back → you're where you were. **+** → **New goal** → the goal form opens.
 - [ ] **Templates from the habit form.** **+** → **New habit** → under Build/Reduce tap **Or pick from templates** → the template list opens.
