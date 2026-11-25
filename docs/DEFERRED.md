@@ -35,7 +35,7 @@ Today now shows one list without Morning/Afternoon/Evening titles. Under the hoo
 2. What period: all time only, or also "this month" / "last 4 weeks"?
 3. How does it look: one line ("12 h 30 min · 48 sessions"), or a small breakdown per habit?
 
-**Steps** (answered 2026-11-25, built in the goal-steps PR)
+**Steps** (answered 2026-11-25, built in PR #8)
 4. "New step" is the third row in the + sheet and asks which goal first.
 5. An undone step from an earlier day stays on Today, marked "from Mon".
 6. The monthly report's "What went well" counts done steps.

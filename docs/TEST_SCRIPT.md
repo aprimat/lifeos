@@ -198,7 +198,7 @@ Run on one iOS and one Android phone, in light and dark mode. Tick each step.
 - [ ] **From a sheet to a screen.** + → **New habit** → the habit form opens normally (no stuck grey layer).
 - [ ] **Smaller +.** The round + in the tab bar is smaller (closer to the other tab icons) and still easy to tap.
 
-## 23. Steps: one-off actions for a goal (PR: goal-steps)
+## 23. Steps: one-off actions for a goal (PR #8)
 - [ ] **Data update.** After the update, open the app → everything is as before (habits, goals, history).
 - [ ] **Add from the goal.** Goals tab → open a goal → a **Steps** card (below Signs) → **Add a step** → type "Update my CV" → **Today** → Save → it's listed with "Today"; the card shows "0 of 1".
 - [ ] **On Today.** Today tab → under the habits, a **Steps** section with "Update my CV" and the goal name under it. The "N of M completed" card and the day ring don't change because of it.
