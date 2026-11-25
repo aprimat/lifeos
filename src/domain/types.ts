@@ -255,13 +255,26 @@ export interface CommitmentReview extends Entity {
 }
 
 /** Everything stored for one user. */
-export const SCHEMA_VERSION = 2;
+/**
+ * A one-off action toward a goal (plan v1.4): it belongs to one goal and never repeats.
+ * Shown on Today only on its date (and after, until done). Time spent is optional.
+ */
+export interface Step extends Entity {
+  goalId: ID;
+  title: string;
+  date: ISODate | null;
+  doneAt: ISODate | null;
+  minutes: number | null;
+}
+
+export const SCHEMA_VERSION = 3;
 
 export interface UserData {
   schemaVersion: typeof SCHEMA_VERSION;
   settings: Settings;
   goals: Goal[];
   milestones: Milestone[];
+  steps: Step[];
   commitments: Commitment[];
   habits: Habit[];
   exceptions: ScheduleException[];
@@ -280,6 +293,7 @@ export function emptyUserData(): UserData {
     settings: { ...DEFAULT_SETTINGS },
     goals: [],
     milestones: [],
+    steps: [],
     commitments: [],
     habits: [],
     exceptions: [],

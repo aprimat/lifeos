@@ -94,3 +94,14 @@ describe('migration v1 → v2', () => {
     expect(migrateData(null, today)).toEqual(emptyUserData());
   });
 });
+
+describe('migration v2 → v3', () => {
+  it('adds an empty steps list and keeps everything else as it was', () => {
+    const h = makeHabit({ goalIds: ['g'] });
+    const { steps: _s, ...v2 } = { ...emptyUserData(), schemaVersion: 2, habits: [h] };
+    const out = migrateData(v2, today);
+    expect(out.schemaVersion).toBe(3);
+    expect(out.steps).toEqual([]);
+    expect(out.habits[0]).toBe(h);
+  });
+});

@@ -12,14 +12,16 @@ import { Screen } from '@/components/screen';
 import { Sheet } from '@/components/sheet';
 import { Text } from '@/components/text';
 import { focusLabel } from '@/copy';
-import { addGoalSign, deleteMilestone, habitsOnlyForGoal, letGoGoal, markGoalAchieved, renameMilestone, restoreGoal, setMilestoneAchieved, updateGoal } from '@/data/actions';
+import { addGoalSign, deleteMilestone, setStepDone, habitsOnlyForGoal, letGoGoal, markGoalAchieved, renameMilestone, restoreGoal, setMilestoneAchieved, updateGoal } from '@/data/actions';
 import { consistency, habitsBreakdown, pct, reduceTrend } from '@/domain/analytics';
-import { addDays, formatShort, toISODate } from '@/domain/dates';
+import { addDays, formatShort, formatShortDay, minutesLabel, toISODate } from '@/domain/dates';
+import type { Step } from '@/domain/types';
 import { useData, useGoal, useGoalSigns, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
 import { HabitRow, recentConsistency } from './shared';
+import { StepSheet } from './step-sheet';
 
 const WINDOW_DAYS = 28;
 
@@ -40,6 +42,8 @@ export function GoalDetails() {
   const [signSheet, setSignSheet] = useState<null | { id: string | null }>(null);
   const [signDraft, setSignDraft] = useState('');
   const [letGoOpen, setLetGoOpen] = useState(false);
+  const [stepSheet, setStepSheet] = useState<null | { step: Step | null }>(null);
+  const [showDoneSteps, setShowDoneSteps] = useState(false);
   const [archiveHabits, setArchiveHabits] = useState(false);
   const data = useData();
 
@@ -58,6 +62,12 @@ export function GoalDetails() {
   const achieved = goal.status === 'achieved' || goal.status === 'concluded';
   const statusLabel = goal.status === 'active' ? 'Active' : goal.status === 'archived' ? 'Let go' : 'Achieved';
   const onlyHere = habitsOnlyForGoal(data, goal.id);
+  const goalSteps = data.steps.filter((st) => st.goalId === goal.id);
+  // Open steps: dated ones by date, then undated, each in the order added.
+  const openSteps = goalSteps
+    .filter((st) => !st.doneAt)
+    .sort((a, b) => (a.date ?? '9999') .localeCompare(b.date ?? '9999') || a.createdAt.localeCompare(b.createdAt));
+  const doneSteps = goalSteps.filter((st) => st.doneAt).sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
   const signsDone = signs.filter((m) => m.achievedAt).length;
 
   const toggleSign = (signId: string, done: boolean) => {
@@ -158,6 +168,48 @@ export function GoalDetails() {
           <Button title="Add a sign" size="sm" variant="secondary" icon="add" onPress={() => openSign(null)} style={{ alignSelf: 'flex-start' }} />
         </Stack>
       </Card>
+
+      {/* Steps: one-off actions toward the goal */}
+      <Card>
+        <Stack gap={spacing.sm}>
+          <Row justify="space-between">
+            <Row>
+              <Icon name="flag-circle" size={18} color={c.primaryText} />
+              <Text variant="labelLg" tone="accent">
+                Steps
+              </Text>
+            </Row>
+            {goalSteps.length ? (
+              <Text variant="labelMd" tone="tertiary" tabular>
+                {doneSteps.length} of {goalSteps.length}
+              </Text>
+            ) : null}
+          </Row>
+          {goalSteps.length ? null : (
+            <Text variant="bodyMd" tone="tertiary">
+              One-off actions toward this goal, e.g. “Update my CV”. Give one a date and it shows on Today.
+            </Text>
+          )}
+          {openSteps.map((st) => (
+            <StepRow key={st.id} step={st} today={today} onEdit={() => setStepSheet({ step: st })} />
+          ))}
+          {doneSteps.length ? (
+            <Button
+              title={showDoneSteps ? 'Hide done' : `Done (${doneSteps.length})`}
+              variant="ghost"
+              size="sm"
+              icon={showDoneSteps ? 'expand-less' : 'expand-more'}
+              onPress={() => setShowDoneSteps((v) => !v)}
+              style={{ alignSelf: 'flex-start' }}
+            />
+          ) : null}
+          {showDoneSteps ? doneSteps.map((st) => <StepRow key={st.id} step={st} today={today} onEdit={() => setStepSheet({ step: st })} />) : null}
+          {goal.status !== 'archived' ? (
+            <Button title="Add a step" size="sm" variant="secondary" icon="add" onPress={() => setStepSheet({ step: null })} style={{ alignSelf: 'flex-start' }} />
+          ) : null}
+        </Stack>
+      </Card>
+      <StepSheet visible={!!stepSheet} onClose={() => setStepSheet(null)} step={stepSheet?.step ?? null} goalId={goal.id} />
 
       {/* How it's going: the habits that support this goal, last 4 weeks */}
       <Card>
@@ -367,5 +419,44 @@ export function GoalDetails() {
         />
       </Sheet>
     </Screen>
+  );
+}
+
+/** One step on the goal page: a tick box, its title and date, and ⋯ to edit. */
+function StepRow({ step, today, onEdit }: { step: Step; today: string; onEdit: () => void }) {
+  const c = useColors();
+  const done = !!step.doneAt;
+  const late = !done && !!step.date && step.date < today;
+  const when = done
+    ? `Done ${step.doneAt === today ? 'today' : formatShort(step.doneAt!)}${step.minutes ? ` · ${minutesLabel(step.minutes)}` : ''}`
+    : step.date
+      ? step.date === today
+        ? 'Today'
+        : `${late ? 'From ' : ''}${formatShortDay(step.date)}`
+      : null;
+  return (
+    <Row gap={spacing.sm}>
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: done }}
+        accessibilityLabel={`${step.title}${when ? `, ${when}` : ''}`}
+        onPress={() => setStepDone(step.id, !done)}
+        style={({ pressed }) => ({ flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44, opacity: pressed ? 0.7 : 1 })}>
+        <Icon name={done ? 'check-box' : 'check-box-outline-blank'} size={24} color={done ? c.sage : c.textTertiary} />
+        <View style={{ flex: 1 }}>
+          <Text variant="bodyMd" strike={done} tone={done ? 'secondary' : 'primary'}>
+            {step.title}
+          </Text>
+          {when ? (
+            <Text variant="bodySm" color={late ? c.amber : undefined} tone={late ? undefined : 'tertiary'}>
+              {when}
+            </Text>
+          ) : null}
+        </View>
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Edit step ${step.title}`} hitSlop={8} onPress={onEdit} style={{ padding: spacing.sm }}>
+        <Icon name="more-horiz" size={20} color={c.textTertiary} />
+      </Pressable>
+    </Row>
   );
 }

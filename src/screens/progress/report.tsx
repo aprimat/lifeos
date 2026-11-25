@@ -13,6 +13,7 @@ import { pct } from '@/domain/analytics';
 import { addDays, endOfMonth, formatMonth, formatRange, minutesLabel, startOfMonth } from '@/domain/dates';
 import { missSummary, type MissSummary } from '@/domain/misses';
 import { periodReport, type PeriodReport } from '@/domain/report';
+import { stepsDoneIn } from '@/domain/steps';
 import { useData, useIndex, useLiveHabits, useToday } from '@/hooks/use-data';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
@@ -23,7 +24,7 @@ import { MissCard } from './miss-card';
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** Plain-language wins, best first. Never empty: a quiet period still gets a kind line. */
-export function reportWins(r: PeriodReport, previousLabel = 'last month'): string[] {
+export function reportWins(r: PeriodReport, previousLabel = 'last month', stepsDone = 0): string[] {
   const b = r.breakdown;
   const wins: string[] = [];
   if (r.best) wins.push(`${r.best.habit.title} went best: ${r.best.breakdown.done} of ${r.best.breakdown.eligible} (${pct(r.best.consistency)}).`);
@@ -31,6 +32,7 @@ export function reportWins(r: PeriodReport, previousLabel = 'last month'): strin
     wins.push(`Up from ${pct(r.previousConsistency)} ${previousLabel}.`);
   }
   if (b.done > 0) wins.push(`${plural(b.done, 'session')} done${r.minutes ? `, ${minutesLabel(r.minutes)} in all` : ''}.`);
+  if (stepsDone > 0) wins.push(`${plural(stepsDone, 'step')} done toward your goals.`);
   if (b.minimum + b.partial > 0) wins.push(`${plural(b.minimum + b.partial, 'smaller version')} on busy days. Showing up still counts.`);
   if (b.within > 0) wins.push(`${plural(b.within, 'day')} within your limit.`);
   if (b.rest > 0) wins.push(`${plural(b.rest, 'rest day')} taken as planned.`);
@@ -39,7 +41,7 @@ export function reportWins(r: PeriodReport, previousLabel = 'last month'): strin
 }
 
 /** The report body, shared by the monthly report and a commitment's look back. */
-export function ReportBody({ report, previousLabel, misses }: { report: PeriodReport; previousLabel?: string; misses?: MissSummary }) {
+export function ReportBody({ report, previousLabel, misses, stepsDone = 0 }: { report: PeriodReport; previousLabel?: string; misses?: MissSummary; stepsDone?: number }) {
   const c = useColors();
   const b = report.breakdown;
   const adjust = report.adjust;
@@ -51,7 +53,7 @@ export function ReportBody({ report, previousLabel, misses }: { report: PeriodRe
             <Icon name="wb-sunny" size={20} color={c.sage} />
             <Text variant="labelLg">What went well</Text>
           </Row>
-          {reportWins(report, previousLabel).map((w) => (
+          {reportWins(report, previousLabel, stepsDone).map((w) => (
             <Row key={w} align="flex-start" gap={spacing.sm}>
               <Icon name="check" size={18} color={c.sage} />
               <Text variant="bodyMd" style={{ flex: 1 }}>
@@ -146,7 +148,8 @@ export function MonthlyReportScreen() {
     () => periodReport(habits, start, end, idx, today, { compareTo: { start: prevStart, end: addDays(start, -1) } }),
     [habits, start, end, prevStart, idx, today],
   );
-  const reflections = useData().reflections;
+  const { reflections, steps } = useData();
+  const stepsDone = stepsDoneIn(steps, start, end);
   const misses = useMemo(() => missSummary(habits, reflections, start, end, idx, today), [habits, reflections, start, end, idx, today]);
   const current = start <= today && today <= end;
 
@@ -173,7 +176,7 @@ export function MonthlyReportScreen() {
           This month hasn&apos;t started yet.
         </Text>
       ) : (
-        <ReportBody report={report} misses={misses} previousLabel="last month" />
+        <ReportBody report={report} misses={misses} previousLabel="last month" stepsDone={stepsDone} />
       )}
     </Screen>
   );

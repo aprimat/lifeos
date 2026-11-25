@@ -23,7 +23,11 @@ import { spacing } from '@/theme/tokens';
 
 import { HabitRow } from './habit-row';
 import { LogSheet, type LogTarget } from './log-sheet';
+import { StepRow } from './step-row';
 import { useDoneLast } from './use-done-last';
+import { StepSheet } from '../goals/step-sheet';
+import { stepsForDay } from '@/domain/steps';
+import type { Step } from '@/domain/types';
 import { WeekPager } from './week-pager';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { MonthCalendar } from '../habits/month-calendar';
@@ -36,6 +40,7 @@ export function TodayScreen() {
   const [selected, setSelected] = useState(today);
   const [sheet, setSheet] = useState<LogTarget | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [editStep, setEditStep] = useState<Step | null>(null);
   const [calendarMonth, setCalendarMonth] = useState(today);
   const data = useData();
   const habits = useLiveHabits();
@@ -76,6 +81,8 @@ export function TodayScreen() {
     [plan],
   );
   const orderedPlan = useDoneLast(byTime, (o) => o.habit.id, (o) => o.done, selected);
+  const daySteps = useMemo(() => stepsForDay(data.steps, data.goals, selected, today), [data.steps, data.goals, selected, today]);
+  const orderedSteps = useDoneLast(daySteps, (x) => x.step.id, (x) => !!x.step.doneAt, selected);
   const orderedFlex = useDoneLast(flex, (f) => f.habit.id, (f) => !!f.log && (f.log.status === 'full' || f.log.status === 'minimum' || f.log.status === 'partial'), selected);
   // Yesterday's unlogged items (optional, dismissible).
   const yesterday = addDays(today, -1);
@@ -280,6 +287,18 @@ export function TodayScreen() {
               })}
             </View>
           ) : null}
+
+          {orderedSteps.length ? (
+            <View style={{ gap: spacing.sm }}>
+              <SectionHeader title="Steps" icon="flag-circle" right={`${daySteps.filter((x) => x.step.doneAt).length} of ${daySteps.length}`} />
+              {orderedSteps.map((x) => (
+                <Animated.View key={x.step.id} layout={LinearTransition.duration(250)}>
+                  <StepRow item={x} today={today} day={selected} onEdit={() => setEditStep(x.step)} />
+                </Animated.View>
+              ))}
+            </View>
+          ) : null}
+          <StepSheet visible={!!editStep} onClose={() => setEditStep(null)} step={editStep} />
 
           {restItems.length ? (
             <View style={{ gap: spacing.sm }}>
