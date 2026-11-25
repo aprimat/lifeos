@@ -15,6 +15,7 @@ import { isAlcohol, type DayStatus, type Occurrence } from '@/domain/schedule';
 import type { Habit } from '@/domain/types';
 import { useStore } from '@/data/store';
 import { useHabitCommitment } from '@/hooks/use-data';
+import { FEATURES } from '@/features';
 import { useColors } from '@/hooks/use-theme';
 import { spacing } from '@/theme/tokens';
 
@@ -34,8 +35,8 @@ export const STATUS_LABEL: Record<DayStatus, string> = {
 };
 
 export function statusTone(s: DayStatus): Tone {
-  if (s === 'full' || s === 'within') return 'primary';
-  if (s === 'minimum' || s === 'partial' || s === 'rest') return 'sage';
+  if (s === 'full' || s === 'within') return 'sage';
+  if (s === 'minimum' || s === 'partial') return 'primary';
   if (s === 'over') return 'amber';
   return 'neutral';
 }
@@ -46,7 +47,7 @@ export function HabitHeader({ habit, occ }: { habit: Habit; occ: Occurrence }) {
   const allGoals = useStore((st) => st.data.goals);
   const goals = allGoals.filter((g) => habit.goalIds.includes(g.id));
   const latest = useHabitCommitment(habit.id);
-  const commitment = latest && (latest.status === 'active' || latest.status === 'paused') ? latest : undefined;
+  const commitment = FEATURES.commitments && latest && (latest.status === 'active' || latest.status === 'paused') ? latest : undefined;
   const tod = TIME_OF_DAY.find((t) => t.value === occ.version.timeOfDay);
   const flexible = occ.version.schedule.type === 'flexWeekly';
   const todayPill =

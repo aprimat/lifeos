@@ -48,7 +48,7 @@ export default function StartRoute() {
         />
       </Group>
       <Text variant="bodySm" tone="tertiary" center>
-        Goals and a commitment are optional. Add them later from the Habits tab.
+        Goals are optional. Add them any time from the Goals tab.
       </Text>
     </Screen>
   );

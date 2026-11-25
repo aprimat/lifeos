@@ -40,12 +40,9 @@ export function GoalsTab() {
   return (
     <Screen bare>
       <View style={{ marginHorizontal: -spacing.md, marginTop: -spacing.sm }}>
-        <TabHeader section="Goals" />
+        <TabHeader title="Goals" />
       </View>
-      <View style={{ gap: spacing.xs }}>
-        <Text variant="headlineLg" accessibilityRole="header">
-          Your goals
-        </Text>
+      <View style={{ gap: spacing.xs, marginTop: -spacing.sm }}>
         <Text variant="bodyMd" tone="secondary">
           Results you want. Optional: habits work without them.
         </Text>

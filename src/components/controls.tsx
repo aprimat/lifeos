@@ -228,9 +228,9 @@ export function CheckCircle({
   const filled = state !== 'idle';
   const color = {
     idle: c.idle,
-    done: c.primary,
-    minimum: c.sage,
-    partial: c.sage,
+    done: c.sage,
+    minimum: c.primary,
+    partial: c.primary,
     skipped: c.slate,
     rest: c.slate,
     over: c.amber,
@@ -244,7 +244,7 @@ export function CheckCircle({
       accessibilityRole="checkbox"
       accessibilityState={{ checked: state === 'done' || state === 'minimum' || state === 'partial' }}
       accessibilityLabel={label}
-      accessibilityHint="Double tap to mark complete. Long press for more options."
+      accessibilityHint={onLongPress ? 'Double tap to mark complete. Long press for more options.' : 'Double tap to tick or untick.'}
       hitSlop={10}
       onPress={() => {
         tapHaptic();

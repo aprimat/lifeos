@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useStore } from '@/data/store';
 import { useColors } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 
 import { IconButton } from './button';
 import { Icon } from './icon';
@@ -38,6 +38,8 @@ export interface ScreenProps {
   bare?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
   testID?: string;
+  /** A white panel pinned at the top, running up under the status bar (e.g. Today's date and week). */
+  header?: ReactNode;
 }
 
 export function goBack(fallback = '/today') {
@@ -57,6 +59,7 @@ export function Screen({
   bare,
   contentStyle,
   testID,
+  header,
 }: ScreenProps) {
   const c = useColors();
   const insets = useSafeAreaInsets();
@@ -68,7 +71,25 @@ export function Screen({
   );
 
   return (
-    <View testID={testID} style={[styles.root, { backgroundColor: c.background, paddingTop: insets.top }]}>
+    <View testID={testID} style={[styles.root, { backgroundColor: c.background, paddingTop: header ? 0 : insets.top }]}>
+      {header ? (
+        <View
+          style={{
+            backgroundColor: c.card,
+            paddingTop: insets.top,
+            paddingBottom: spacing.sm,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: c.border,
+            shadowColor: '#000',
+            shadowOpacity: 0.05,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 2,
+            zIndex: 1,
+          }}>
+          <View style={{ width: '100%', maxWidth: 720, alignSelf: 'center' }}>{header}</View>
+        </View>
+      ) : null}
       {!bare && (
         <View style={[styles.bar, { borderBottomColor: c.border }]}>
           <View style={styles.barSide}>
@@ -146,22 +167,17 @@ export function Avatar({ size = 36 }: { size?: number }) {
 }
 
 /** Header used on the three tab screens: "LifeOS / Today" + avatar. */
-export function TabHeader({ section }: { section: string }) {
-  const c = useColors();
+/** Top of a tab: the page's title on the left; optional buttons, then the profile picture, on the right. */
+export function TabHeader({ title, right, size = 'lg' }: { title: string; right?: ReactNode; size?: 'lg' | 'md' }) {
   return (
     <View style={[styles.tabHeader]}>
-      <View style={styles.brand}>
-        <View style={[styles.logo, { backgroundColor: c.primarySoft }]}>
-          <Icon name="radio-button-checked" size={18} color={c.primaryText} />
-        </View>
-        <View>
-          <Text variant="headlineSm">LifeOS</Text>
-          <Text variant="labelMd" tone="tertiary">
-            {section}
-          </Text>
-        </View>
+      <Text variant={size === 'lg' ? 'headlineLg' : 'headlineMd'} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flex: 1 }}>
+        {title}
+      </Text>
+      <View style={styles.tabRight}>
+        {right}
+        <Avatar />
       </View>
-      <Avatar />
     </View>
   );
 }
@@ -188,6 +204,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  logo: { width: 36, height: 36, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  tabRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginLeft: spacing.sm },
 });

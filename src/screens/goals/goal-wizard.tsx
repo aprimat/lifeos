@@ -12,6 +12,7 @@ import { Text } from '@/components/text';
 import { FOCUS_AREAS, focusLabel } from '@/copy';
 import { addGoalSign, completeOnboarding, createGoal } from '@/data/actions';
 import type { FocusArea } from '@/domain/types';
+import { FEATURES } from '@/features';
 import { useColors } from '@/hooks/use-theme';
 import { radius, spacing } from '@/theme/tokens';
 
@@ -43,7 +44,7 @@ export function GoalWizard() {
   const [signs, setSigns] = useState<string[]>([]);
   const [signDraft, setSignDraft] = useState('');
   const [why, setWhy] = useState('');
-  const [next, setNext] = useState<Next>(params.next === 'habit' ? 'habit' : params.next === 'commitment' ? 'commitment' : 'commitment');
+  const [next, setNext] = useState<Next>(params.next === 'habit' || !FEATURES.commitments ? 'habit' : 'commitment');
 
   const ob = onboarding ? '&onboarding=1' : '';
 
@@ -219,6 +220,7 @@ export function GoalWizard() {
       {step === 3 ? (
         <>
           <PageTitle title="What would you like to do next?" subtitle="You can always add more later." />
+          {FEATURES.commitments ? (
           <SelectableCard
             icon="timer"
             title="Start a commitment"
@@ -226,6 +228,7 @@ export function GoalWizard() {
             selected={next === 'commitment'}
             onPress={() => setNext('commitment')}
           />
+          ) : null}
           <SelectableCard
             icon="repeat"
             title="Add a habit"

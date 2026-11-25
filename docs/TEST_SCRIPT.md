@@ -171,3 +171,29 @@ Run on one iOS and one Android phone, in light and dark mode. Tick each step.
 - [ ] **Let it go, archive habits.** Make a goal with one habit only for it and one habit shared with another goal → **Let it go** → tick "Also archive its habit" (only the unshared habit is named) → **Let it go** → that habit is gone from Today and listed under Habits tab → **Archived habits**; the shared habit keeps going.
 - [ ] **Bring it back.** Open a let-go goal → **Bring it back** → it's Active again and back in the Goals list.
 - [ ] **Habits tab.** No "Add a goal" row and no goals list at the bottom any more; archived habits are under **Archived habits (N)**.
+
+## 22. Today: short date, swipeable week of circles, calendar, day rings; commitments hidden (PR: today-header)
+- [ ] **Header.** Today tab → top left shows a short date, e.g. "Tue, Nov 24". No "LifeOS" logo, no greeting, no "Today" button. Top right: a calendar icon, then your initials; tap the initials → Profile & settings.
+- [ ] **Other tabs.** Habits, Goals and Progress show their name top left and your initials top right; no "LifeOS" logo.
+- [ ] **Top panel.** The date, calendar icon, initials and week strip sit together on one white panel at the top (up under the clock), with a soft line under it. It stays put when you scroll the habits.
+- [ ] **Week strip.** Every day is a thin grey circle with the date inside and the short weekday under it (Mon, Tue…); today's name is blue and bold; the selected day is a filled blue circle. No grey dots.
+- [ ] **Day rings.** Past days and today fill their ring with how much was done (e.g. 2 of 3 → two-thirds blue). All done → full green ring with a small ✓. Nothing done, nothing planned, or a future day → just the plain grey circle.
+- [ ] **Ring updates.** Tick a habit on Today → today's ring fills a bit more at once; tick all → full green with ✓.
+- [ ] **Swipe weeks.** Swipe the strip left → next week; swipe right → previous weeks with their rings. Far before your first habit → no marks; tapping a day there says nothing is scheduled.
+- [ ] **Other day.** Tap another day → the header date changes; no note/banner appears.
+- [ ] **Log a past day.** Tap a day 2+ weeks ago → tick a habit → it's logged and that day's ring updates. (Any past day can be logged now.)
+- [ ] **Future day.** Tap a future day → its habits are shown dimmed; tapping their circles does nothing.
+- [ ] **Plan card.** Shows only "2 of 3 completed", the % on the right and a thin bar. No "DAILY PLAN" label, no "Paced for…" line.
+- [ ] **One list.** Under the card, habits are one list: no "DAILY HABITS · 2 of 3 done" line, no Morning/Afternoon/Evening titles or "1 of 1" counts. Habit cards are a bit more compact.
+- [ ] **Done moves down.** Tick the top habit → it shows the tick, then after about a second slides to the bottom. Untick it → it moves back up at once. Tick several quickly → each moves down after its pause; the next one to do stays at the top.
+- [ ] **Day switch.** Tap another day and back → completed habits are already at the bottom (no animation).
+- [ ] **Untick.** Tap a ticked circle → it's unticked at once and moves back up. Long-press a circle → nothing happens. Tap ⋯ → the logging details open (done, minimum version, amount…). Tap the habit's name → its page opens.
+- [ ] **Untick with an amount or note.** ⋯ → log a different amount (e.g. 25 min instead of 15) or add a note → Save → tap the circle → "Remove this log?" → **Cancel** keeps it; tap again → **Remove** unticks it.
+- [ ] **Colours.** A done habit's circle is green; a minimum-version (or partial) circle is blue. On a habit's page the calendar shows done days green, minimum days light blue, planned rest grey. Progress bars: green = full, blue = minimum/partial.
+- [ ] **No bottom button.** No "+ Add a habit" button at the end of Today; use the round + in the tab bar.
+- [ ] **Strip edges.** The Mon and Sun circles have a bit of space from the screen edges.
+- [ ] **Calendar.** Tap the calendar icon → a month view with the same circles and rings, the selected day filled blue, today's number blue; arrows change month; tap a day → the sheet closes, the header shows that day and the strip moves to its week.
+- [ ] **Commitments hidden.** No "Day 1 of 30" line on Today; no "Make a commitment" button or commitment card on the Habits tab; no commitment card on a habit's page; no Commitments section on Progress; the new-goal form's last step offers only "Add a habit" and "Decide later". Your habits from a commitment still show and work as normal.
+- [ ] **Sheets open calmly.** Tap the calendar icon, a habit's ⋯, or the round + → the grey background appears at once (it doesn't slide), and only the white panel slides up. Close it (✕, tap the grey, or pick an option) → the panel slides down, then the grey goes. Same for any sheet in the app (e.g. a habit's ⋯ menu on its page).
+- [ ] **From a sheet to a screen.** + → **New habit** → the habit form opens normally (no stuck grey layer).
+- [ ] **Smaller +.** The round + in the tab bar is smaller (closer to the other tab icons) and still easy to tap.

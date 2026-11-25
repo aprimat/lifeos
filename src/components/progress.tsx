@@ -1,11 +1,13 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Rect } from 'react-native-svg';
 
 import type { Breakdown } from '@/domain/analytics';
-import { dayOfMonth, formatLong, weekdayIndex, weekdayLetter } from '@/domain/dates';
+import { dayMark, dayMarkLabel, type DayMark } from '@/domain/day-mark';
+import { dayOfMonth, formatLong, weekdayIndex, weekdayShort } from '@/domain/dates';
 import type { DayStatus } from '@/domain/schedule';
 import { useColors } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 
 import { Icon } from './icon';
 import { Text } from './text';
@@ -28,8 +30,8 @@ export function BreakdownBar({ b, height = 8 }: { b: Breakdown; height?: number 
   const c = useColors();
   const total = Math.max(1, b.eligible);
   const parts = [
-    { n: b.full + b.within, color: c.primary },
-    { n: b.minimum + b.partial, color: c.sage },
+    { n: b.full + b.within, color: c.sage },
+    { n: b.minimum + b.partial, color: c.primary },
     { n: b.skipped + b.over, color: c.amber },
     { n: b.missed + b.notLogged, color: c.idle },
   ];
@@ -44,8 +46,8 @@ export function BreakdownBar({ b, height = 8 }: { b: Breakdown; height?: number 
 export function BreakdownLegend({ b }: { b: Breakdown }) {
   const c = useColors();
   const items = [
-    { label: 'Full', n: b.full + b.within, color: c.primary },
-    { label: 'Minimum / partial', n: b.minimum + b.partial, color: c.sage },
+    { label: 'Full', n: b.full + b.within, color: c.sage },
+    { label: 'Minimum / partial', n: b.minimum + b.partial, color: c.primary },
     { label: b.over ? 'Skipped / over' : 'Skipped', n: b.skipped + b.over, color: c.amber },
     { label: 'Not logged', n: b.missed + b.notLogged, color: c.idle },
   ].filter((i) => i.n > 0);
@@ -112,10 +114,10 @@ export function useStatusStyle() {
     switch (s) {
       case 'full':
       case 'within':
-        return { bg: c.primary, fg: c.onPrimary, icon: 'check', label: s === 'within' ? 'Within limit' : 'Completed' };
+        return { bg: c.sage, fg: c.onPrimary, icon: 'check', label: s === 'within' ? 'Within limit' : 'Completed' };
       case 'minimum':
       case 'partial':
-        return { bg: c.sageSoft, fg: c.sage, icon: 'eco', label: s === 'minimum' ? 'Minimum version' : 'Partial' };
+        return { bg: c.primarySoft, fg: c.primaryText, icon: 'eco', label: s === 'minimum' ? 'Minimum version' : 'Partial' };
       case 'over':
         return { bg: c.amberSoft, fg: c.amber, icon: 'trending-up', label: 'Over limit' };
       case 'skipped':
@@ -124,7 +126,7 @@ export function useStatusStyle() {
       case 'notLogged':
         return { bg: 'transparent', fg: c.textTertiary, icon: 'remove', label: 'Not logged' };
       case 'rest':
-        return { bg: c.sageSoft, fg: c.sage, icon: 'bedtime', label: 'Planned rest' };
+        return { bg: c.inset, fg: c.textSecondary, icon: 'bedtime', label: 'Planned rest' };
       case 'rescheduled':
         return { bg: c.inset, fg: c.textSecondary, icon: 'update', label: 'Rescheduled' };
       case 'upcoming':
@@ -160,6 +162,78 @@ export function StatusDay({ status, size = 34, label }: { status: DayStatus | 'f
 }
 
 /** Mon–Sun strip used on Today. */
+export { dayMark, dayMarkLabel, type DayMark };
+
+/**
+ * A day as a circle with its number. Every day has a thin grey circle; on past days and today
+ * it fills with how much of the plan was done, and turns full green with a ✓ when all of it was.
+ * `filled` marks the selected day.
+ */
+export function DayRing({
+  done,
+  planned,
+  mark,
+  size = 40,
+  filled,
+  children,
+}: {
+  done: number;
+  planned: number;
+  mark: DayMark;
+  size?: number;
+  filled?: boolean;
+  children: ReactNode;
+}) {
+  const c = useColors();
+  const stroke = 3;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  // Future days ("planned") show no progress; past days and today show what was done.
+  const ratio = mark === 'all' ? 1 : mark === 'some' || (mark === 'planned' && done > 0) ? Math.min(1, done / Math.max(1, planned)) : 0;
+  const inner = size - stroke * 2 - 2;
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={c.border} strokeWidth={stroke} fill="none" />
+        {ratio > 0 ? (
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            stroke={mark === 'all' ? c.sage : c.primary}
+            strokeWidth={stroke}
+            fill="none"
+            strokeDasharray={`${circ * ratio} ${circ}`}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+        ) : null}
+      </Svg>
+      {filled ? <View style={{ position: 'absolute', width: inner, height: inner, borderRadius: inner / 2, backgroundColor: c.primary }} /> : null}
+      {children}
+      {mark === 'all' ? (
+        <View
+          style={{
+            position: 'absolute',
+            top: -3,
+            right: -3,
+            width: 15,
+            height: 15,
+            borderRadius: 8,
+            backgroundColor: c.sage,
+            borderWidth: 1.5,
+            borderColor: c.card,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <Icon name="check" size={10} color={c.onPrimary} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** One week: each day a circle with its number (and progress ring), the short weekday name under it. */
 export function WeekStrip({
   days,
   selected,
@@ -176,23 +250,24 @@ export function WeekStrip({
     <View style={styles.strip}>
       {days.map((d) => {
         const active = d.date === selected;
-        const future = d.date > today;
-        const dot = d.planned === 0 ? 'transparent' : d.done >= d.planned ? c.sage : d.done > 0 ? c.primary : c.idle;
+        const isToday = d.date === today;
+        const mark = dayMark(d, today);
         return (
           <Pressable
             key={d.date}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={`${formatLong(d.date)}${d.planned ? `, ${d.done} of ${d.planned} done` : ''}`}
+            accessibilityLabel={`${formatLong(d.date)}${isToday ? ', today' : ''}, ${dayMarkLabel(d, mark)}`}
             onPress={() => onSelect(d.date)}
-            style={[styles.stripDay, active && { backgroundColor: c.primary }]}>
-            <Text variant="labelMd" color={active ? c.onPrimary : c.textTertiary}>
-              {weekdayLetter(weekdayIndex(d.date))}
+            style={styles.stripDay}>
+            <DayRing done={d.done} planned={d.planned} mark={mark} filled={active}>
+              <Text variant="labelLg" tabular color={active ? c.onPrimary : d.date > today ? c.textTertiary : c.text}>
+                {dayOfMonth(d.date)}
+              </Text>
+            </DayRing>
+            <Text variant="labelSm" color={isToday ? c.primaryText : c.textTertiary} style={isToday ? { fontWeight: '700' } : undefined}>
+              {weekdayShort(weekdayIndex(d.date))}
             </Text>
-            <Text variant="headlineSm" tabular color={active ? c.onPrimary : future ? c.textTertiary : c.text}>
-              {dayOfMonth(d.date)}
-            </Text>
-            <View style={[styles.dot, { backgroundColor: active && d.planned ? c.onPrimary : dot }]} />
           </Pressable>
         );
       })}
@@ -284,5 +359,5 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 6, height: 6, borderRadius: 3 },
   strip: { flexDirection: 'row', justifyContent: 'space-between', gap: 4 },
-  stripDay: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: spacing.sm, borderRadius: radius.md },
+  stripDay: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 4 },
 });

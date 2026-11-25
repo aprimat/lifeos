@@ -51,15 +51,15 @@ export default function TabsLayout() {
                     setAddOpen(true);
                   }}
                   style={({ pressed }) => ({
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
                     backgroundColor: c.primary,
                     alignItems: 'center',
                     justifyContent: 'center',
                     opacity: pressed ? 0.8 : 1,
                   })}>
-                  <Icon name="add" size={28} color={c.onPrimary} />
+                  <Icon name="add" size={24} color={c.onPrimary} />
                 </Pressable>
               </View>
             ),
