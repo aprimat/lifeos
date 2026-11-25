@@ -172,7 +172,7 @@ Run on one iOS and one Android phone, in light and dark mode. Tick each step.
 - [ ] **Bring it back.** Open a let-go goal → **Bring it back** → it's Active again and back in the Goals list.
 - [ ] **Habits tab.** No "Add a goal" row and no goals list at the bottom any more; archived habits are under **Archived habits (N)**.
 
-## 22. Today: short date, swipeable week of circles, calendar, day rings; commitments hidden (PR: today-header)
+## 22. Today: short date, swipeable week of circles, calendar, day rings; commitments hidden (PR #7)
 - [ ] **Header.** Today tab → top left shows a short date, e.g. "Tue, Nov 24". No "LifeOS" logo, no greeting, no "Today" button. Top right: a calendar icon, then your initials; tap the initials → Profile & settings.
 - [ ] **Other tabs.** Habits, Goals and Progress show their name top left and your initials top right; no "LifeOS" logo.
 - [ ] **Top panel.** The date, calendar icon, initials and week strip sit together on one white panel at the top (up under the clock), with a soft line under it. It stays put when you scroll the habits.
